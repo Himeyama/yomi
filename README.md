@@ -17,14 +17,14 @@ CPU / メモリ / GPU / VRAM の使用率を、数値とタスクマネージャ
 - C# / WPF (.NET 8, net8.0-windows)
 - [LibreHardwareMonitorLib](https://www.nuget.org/packages/LibreHardwareMonitorLib) — CPU/メモリ/GPUセンサー取得
 - [TaskScheduler](https://www.nuget.org/packages/TaskScheduler) (Microsoft.Win32.TaskScheduler) — 自動起動タスク登録
-- [Inno Setup](https://jrsoftware.org/isinfo.php) — インストーラー生成
+- [NSIS](https://nsis.sourceforge.io/) — インストーラー生成
 
 ## プロジェクト構成
 
 ```
 src/Yomi.App/        WPFアプリ本体
 tests/Yomi.Tests/     単体テスト (xUnit)
-installer/Yomi.Setup/ Inno Setupインストーラースクリプト
+installer/Yomi.Setup/ NSISインストーラースクリプト
 ```
 
 ## ビルド・実行
@@ -48,4 +48,8 @@ dotnet test
 dotnet publish src\Yomi.App\Yomi.App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o installer\Yomi.Setup\publish
 ```
 
-生成された `installer\Yomi.Setup\publish` を対象に、[Inno Setup](https://jrsoftware.org/isdl.php) で `installer\Yomi.Setup\setup.iss` をコンパイルするとインストーラー (`installer\Yomi.Setup\Output\yomi-setup-*.exe`) が生成される。
+生成された `installer\Yomi.Setup\publish` を対象に、[NSIS](https://nsis.sourceforge.io/Download) で `installer\Yomi.Setup\setup.nsi` をコンパイルするとインストーラー (`installer\Yomi.Setup\Output\yomi-setup-*.exe`) が生成される。
+
+```powershell
+& "C:\Program Files (x86)\NSIS\makensis.exe" installer\Yomi.Setup\setup.nsi
+```

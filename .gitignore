@@ -8,8 +8,8 @@ obj/
 # Rider
 .idea/
 
-# Inno Setup output
-installer/Output/
+# NSIS output
+installer/Yomi.Setup/Output/
 installer/Yomi.Setup/publish/
 
 # OS

@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-installer:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag -replace '^v', ''
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Run tests
+        run: dotnet test -c Release
+
+      - name: Publish app
+        run: >
+          dotnet publish src\Yomi.App\Yomi.App.csproj -c Release -r win-x64
+          --self-contained true -p:PublishSingleFile=true
+          -p:Version=${{ steps.version.outputs.version }}
+          -o installer\Yomi.Setup\publish
+
+      - name: Install NSIS
+        run: choco install nsis -y --no-progress
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path installer\Yomi.Setup\Output | Out-Null
+          & "C:\Program Files (x86)\NSIS\makensis.exe" /DMyAppVersion=${{ steps.version.outputs.version }} installer\Yomi.Setup\setup.nsi
+
+      - name: Upload release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: installer\Yomi.Setup\Output\yomi-setup-${{ steps.version.outputs.version }}.exe
+          generate_release_notes: true
