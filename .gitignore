@@ -1,0 +1,17 @@
+# Visual Studio / .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Rider
+.idea/
+
+# Inno Setup output
+installer/Output/
+installer/Yomi.Setup/publish/
+
+# OS
+Thumbs.db
+Desktop.ini
