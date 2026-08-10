@@ -36,7 +36,7 @@ jobs:
           dotnet publish src\Yomi.App\Yomi.App.csproj -c Release -r win-x64
           --self-contained true -p:PublishSingleFile=true
           -p:Version=${{ steps.version.outputs.version }}
-          -o installer\Yomi.Setup\publish
+          -o installer\Yomi.Nsis\publish
 
       - name: Install NSIS
         run: choco install nsis -y --no-progress
@@ -44,11 +44,11 @@ jobs:
       - name: Build installer
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path installer\Yomi.Setup\Output | Out-Null
-          & "C:\Program Files (x86)\NSIS\makensis.exe" /DMyAppVersion=${{ steps.version.outputs.version }} installer\Yomi.Setup\setup.nsi
+          New-Item -ItemType Directory -Force -Path installer\Yomi.Nsis\Output | Out-Null
+          & "C:\Program Files (x86)\NSIS\makensis.exe" /DMyAppVersion=${{ steps.version.outputs.version }} installer\Yomi.Nsis\setup.nsi
 
       - name: Upload release
         uses: softprops/action-gh-release@v2
         with:
-          files: installer\Yomi.Setup\Output\yomi-setup-${{ steps.version.outputs.version }}.exe
+          files: installer\Yomi.Nsis\Output\yomi-setup-${{ steps.version.outputs.version }}.exe
           generate_release_notes: true

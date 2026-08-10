@@ -1,7 +1,7 @@
 ﻿; yomi インストーラー定義 (NSIS)
 ; ビルド前提: dotnet publish -c Release -r win-x64 --self-contained true
 ;   -p:PublishSingleFile=true -o publish
-; の成果物が installer\Yomi.Setup\publish に存在すること。
+; の成果物が installer\Yomi.Nsis\publish に存在すること。
 
 Unicode true
 

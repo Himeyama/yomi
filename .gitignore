@@ -9,8 +9,8 @@ obj/
 .idea/
 
 # NSIS output
-installer/Yomi.Setup/Output/
-installer/Yomi.Setup/publish/
+installer/Yomi.Nsis/Output/
+installer/Yomi.Nsis/publish/
 
 # OS
 Thumbs.db

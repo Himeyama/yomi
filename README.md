@@ -24,7 +24,7 @@ CPU / メモリ / GPU / VRAM の使用率を、数値とタスクマネージャ
 ```
 src/Yomi.App/        WPFアプリ本体
 tests/Yomi.Tests/     単体テスト (xUnit)
-installer/Yomi.Setup/ NSISインストーラースクリプト
+installer/Yomi.Nsis/   NSISインストーラースクリプト
 ```
 
 ## ビルド・実行
@@ -45,11 +45,11 @@ dotnet test
 ## インストーラー作成
 
 ```powershell
-dotnet publish src\Yomi.App\Yomi.App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o installer\Yomi.Setup\publish
+dotnet publish src\Yomi.App\Yomi.App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o installer\Yomi.Nsis\publish
 ```
 
-生成された `installer\Yomi.Setup\publish` を対象に、[NSIS](https://nsis.sourceforge.io/Download) で `installer\Yomi.Setup\setup.nsi` をコンパイルするとインストーラー (`installer\Yomi.Setup\Output\yomi-setup-*.exe`) が生成される。
+生成された `installer\Yomi.Nsis\publish` を対象に、[NSIS](https://nsis.sourceforge.io/Download) で `installer\Yomi.Nsis\setup.nsi` をコンパイルするとインストーラー (`installer\Yomi.Nsis\Output\yomi-setup-*.exe`) が生成される。
 
 ```powershell
-& "C:\Program Files (x86)\NSIS\makensis.exe" installer\Yomi.Setup\setup.nsi
+& "C:\Program Files (x86)\NSIS\makensis.exe" installer\Yomi.Nsis\setup.nsi
 ```
