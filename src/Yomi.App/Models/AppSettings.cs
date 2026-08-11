@@ -1,8 +1,15 @@
 namespace Yomi.App.Models;
 
+public enum OverlayBackgroundColor
+{
+    Black,
+    White,
+}
+
 public sealed class AppSettings
 {
     public double Opacity { get; set; } = 0.85;
+    public OverlayBackgroundColor BackgroundColor { get; set; } = OverlayBackgroundColor.Black;
     public bool ShowCpu { get; set; } = true;
     public bool ShowMemory { get; set; } = true;
     public bool ShowGpu { get; set; } = true;

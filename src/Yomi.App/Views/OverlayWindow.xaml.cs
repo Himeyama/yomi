@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Threading;
 using Yomi.App.Interop;
 using Yomi.App.Models;
@@ -70,7 +71,22 @@ public partial class OverlayWindow : Window
 
     public void ApplySettings(AppSettings settings)
     {
-        Opacity = settings.Opacity;
+        var baseColor = settings.BackgroundColor == OverlayBackgroundColor.White
+            ? Colors.White
+            : Colors.Black;
+        var alpha = (byte)Math.Round(Math.Clamp(settings.Opacity, 0.0, 1.0) * 255);
+        BackgroundBorder.Background = new SolidColorBrush(Color.FromArgb(alpha, baseColor.R, baseColor.G, baseColor.B));
+
+        var labelColor = settings.BackgroundColor == OverlayBackgroundColor.White
+            ? Brushes.Black
+            : Brushes.White;
+        CpuLabelText.Foreground = labelColor;
+        MemoryLabelText.Foreground = labelColor;
+        GpuLabelText.Foreground = labelColor;
+        VramLabelText.Foreground = labelColor;
+        NetworkIpLabelText.Foreground = labelColor;
+        NetworkDnsLabelText.Foreground = labelColor;
+
         CpuSection.Visibility = settings.ShowCpu ? Visibility.Visible : Visibility.Collapsed;
         MemorySection.Visibility = settings.ShowMemory ? Visibility.Visible : Visibility.Collapsed;
         GpuSection.Visibility = settings.ShowGpu ? Visibility.Visible : Visibility.Collapsed;

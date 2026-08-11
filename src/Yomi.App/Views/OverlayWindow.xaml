@@ -9,9 +9,8 @@
         Background="Transparent"
         ShowInTaskbar="False"
         ResizeMode="NoResize"
-        Topmost="False"
-        Opacity="0.85">
-    <Border Background="#99101010" CornerRadius="6" Padding="12">
+        Topmost="False">
+    <Border x:Name="BackgroundBorder" Background="#FF101010" CornerRadius="6" Padding="12">
         <StackPanel>
             <StackPanel x:Name="CpuSection">
                 <Grid Margin="0,0,0,2">
@@ -19,7 +18,7 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="CPU" Foreground="White" FontSize="11"/>
+                    <TextBlock x:Name="CpuLabelText" Grid.Column="0" Text="CPU" Foreground="White" FontSize="11"/>
                     <TextBlock x:Name="CpuValueText" Grid.Column="1" Text="--%" Foreground="#7FDBFF" FontSize="14"/>
                 </Grid>
                 <TextBlock x:Name="CpuNameText" Text="--" Foreground="#999999" FontSize="9" Margin="0,0,0,4" TextWrapping="Wrap"/>
@@ -32,7 +31,7 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="メモリ" Foreground="White" FontSize="11"/>
+                    <TextBlock x:Name="MemoryLabelText" Grid.Column="0" Text="メモリ" Foreground="White" FontSize="11"/>
                     <TextBlock x:Name="MemoryValueText" Grid.Column="1" Text="--" Foreground="#B6F542" FontSize="14"/>
                 </Grid>
                 <local:GraphControl x:Name="MemoryGraph" Height="90" LineBrush="#B6F542" Margin="0,0,0,10"/>
@@ -44,7 +43,7 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="GPU" Foreground="White" FontSize="11"/>
+                    <TextBlock x:Name="GpuLabelText" Grid.Column="0" Text="GPU" Foreground="White" FontSize="11"/>
                     <TextBlock x:Name="GpuValueText" Grid.Column="1" Text="--%" Foreground="#FFB347" FontSize="14"/>
                 </Grid>
                 <TextBlock x:Name="GpuNameText" Text="--" Foreground="#999999" FontSize="9" Margin="0,0,0,4" TextWrapping="Wrap"/>
@@ -57,7 +56,7 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="VRAM" Foreground="White" FontSize="11"/>
+                    <TextBlock x:Name="VramLabelText" Grid.Column="0" Text="VRAM" Foreground="White" FontSize="11"/>
                     <TextBlock x:Name="VramValueText" Grid.Column="1" Text="--" Foreground="#FF7F9E" FontSize="14"/>
                 </Grid>
                 <local:GraphControl x:Name="VramGraph" Height="90" LineBrush="#FF7F9E" Margin="0,0,0,10"/>
@@ -68,7 +67,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="IPアドレス" Foreground="White" FontSize="11"/>
+                    <TextBlock x:Name="NetworkIpLabelText" Grid.Column="0" Text="IPアドレス" Foreground="White" FontSize="11"/>
                 </Grid>
                 <TextBlock x:Name="IpAddressText" Text="--" Foreground="#C9A8FF" FontSize="13" Margin="0,0,0,6" TextWrapping="Wrap"/>
 
@@ -76,7 +75,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="DNS" Foreground="White" FontSize="11"/>
+                    <TextBlock x:Name="NetworkDnsLabelText" Grid.Column="0" Text="DNS" Foreground="White" FontSize="11"/>
                 </Grid>
                 <TextBlock x:Name="DnsText" Text="--" Foreground="#C9A8FF" FontSize="13" TextWrapping="Wrap"/>
             </StackPanel>
