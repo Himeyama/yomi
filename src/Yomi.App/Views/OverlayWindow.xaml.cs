@@ -101,17 +101,30 @@ public partial class OverlayWindow : Window
         Top = screenBounds.Top + margin;
     }
 
+    // (キー, 黒背景用の色, 白背景用の色)。白背景用は同系色のまま明度を下げてコントラストを確保する。
+    private static readonly (string Key, Color Dark, Color Light)[] ThemedBrushes =
+    [
+        ("CpuBrush", Color.FromRgb(0x29, 0xAB, 0xD4), Color.FromRgb(0x00, 0x64, 0x7F)),
+        ("MemoryBrush", Color.FromRgb(0x4D, 0x8F, 0xFF), Color.FromRgb(0x1D, 0x4E, 0xD8)),
+        ("GpuBrush", Color.FromRgb(0xA8, 0x55, 0xF7), Color.FromRgb(0x7C, 0x1F, 0xD9)),
+        ("VramBrush", Color.FromRgb(0xD1, 0x9C, 0xFF), Color.FromRgb(0x8A, 0x2B, 0xE8)),
+        ("DiskBrush", Color.FromRgb(0x3B, 0x9E, 0xFF), Color.FromRgb(0x0B, 0x63, 0xC6)),
+        ("DiskWarningBrush", Color.FromRgb(0xF0, 0x4A, 0x38), Color.FromRgb(0xC4, 0x2B, 0x1C)),
+        ("NetworkDownloadBrush", Color.FromRgb(0xF0, 0x40, 0x7E), Color.FromRgb(0xB3, 0x17, 0x56)),
+        ("NetworkUploadBrush", Color.FromRgb(0xFF, 0xA8, 0x3C), Color.FromRgb(0xC4, 0x6A, 0x00)),
+        ("NetworkAddressBrush", Color.FromRgb(0xC9, 0xA8, 0xFF), Color.FromRgb(0x6B, 0x21, 0xA8)),
+        ("SecondaryTextBrush", Color.FromRgb(0xCC, 0xCC, 0xCC), Color.FromRgb(0x55, 0x55, 0x55)),
+    ];
+
     public void ApplySettings(AppSettings settings)
     {
-        var baseColor = settings.BackgroundColor == OverlayBackgroundColor.White
-            ? Colors.White
-            : Colors.Black;
+        var isWhiteTheme = settings.BackgroundColor == OverlayBackgroundColor.White;
+
+        var baseColor = isWhiteTheme ? Colors.White : Colors.Black;
         var alpha = (byte)Math.Round(Math.Clamp(settings.Opacity, 0.0, 1.0) * 255);
         BackgroundBorder.Background = new SolidColorBrush(Color.FromArgb(alpha, baseColor.R, baseColor.G, baseColor.B));
 
-        var labelColor = settings.BackgroundColor == OverlayBackgroundColor.White
-            ? Brushes.Black
-            : Brushes.White;
+        var labelColor = isWhiteTheme ? Brushes.Black : Brushes.White;
         CpuLabelText.Foreground = labelColor;
         MemoryLabelText.Foreground = labelColor;
         GpuLabelText.Foreground = labelColor;
@@ -120,6 +133,11 @@ public partial class OverlayWindow : Window
         NetworkSpeedLabelText.Foreground = labelColor;
         NetworkIpLabelText.Foreground = labelColor;
         NetworkDnsLabelText.Foreground = labelColor;
+
+        foreach (var (key, dark, light) in ThemedBrushes)
+        {
+            BackgroundBorder.Resources[key] = new SolidColorBrush(isWhiteTheme ? light : dark);
+        }
 
         CpuSection.Visibility = settings.ShowCpu ? Visibility.Visible : Visibility.Collapsed;
         MemorySection.Visibility = settings.ShowMemory ? Visibility.Visible : Visibility.Collapsed;

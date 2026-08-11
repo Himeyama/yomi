@@ -10,7 +10,7 @@ Unicode true
 
 !define MyAppName "yomi"
 !ifndef MyAppVersion
-  !define MyAppVersion "0.3.0"
+  !define MyAppVersion "0.4.0"
 !endif
 !define MyAppPublisher "yomi project"
 !define MyAppExeName "yomi.exe"
