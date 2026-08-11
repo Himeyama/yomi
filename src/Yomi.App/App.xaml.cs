@@ -41,6 +41,7 @@ public partial class App : Application
             new CpuMetricsProvider(),
             new MemoryMetricsProvider(),
             new GpuMetricsProvider(),
+            new DiskMetricsProvider(),
             new NetworkInfoProvider());
 
         CreateOverlayWindowsForAllScreens(settings);

@@ -26,6 +26,7 @@ public partial class SettingsWindow : Window
         ShowMemoryCheck.IsChecked = _settings.ShowMemory;
         ShowGpuCheck.IsChecked = _settings.ShowGpu;
         ShowVramCheck.IsChecked = _settings.ShowVram;
+        ShowDiskCheck.IsChecked = _settings.ShowDisk;
         ShowNetworkCheck.IsChecked = _settings.ShowNetwork;
         StartWithWindowsCheck.IsChecked = _settings.StartWithWindows;
     }
@@ -50,6 +51,7 @@ public partial class SettingsWindow : Window
             ShowMemory = ShowMemoryCheck.IsChecked ?? true,
             ShowGpu = ShowGpuCheck.IsChecked ?? true,
             ShowVram = ShowVramCheck.IsChecked ?? true,
+            ShowDisk = ShowDiskCheck.IsChecked ?? true,
             ShowNetwork = ShowNetworkCheck.IsChecked ?? true,
             StartWithWindows = StartWithWindowsCheck.IsChecked ?? true,
         };

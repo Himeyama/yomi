@@ -38,6 +38,15 @@ public partial class OverlayWindow : Window
             IpAddressText.Text = sample.IpAddressWithPrefix ?? "--";
             DnsText.Text = sample.DnsServers ?? "--";
 
+            DiskItemsControl.ItemsSource = sample.Disks
+                .Select(d => new DiskDriveDisplayItem
+                {
+                    Name = d.Name,
+                    UsageText = FormatDiskUsage(d.UsedBytes, d.TotalBytes, d.UsagePercent),
+                    UsagePercent = d.UsagePercent,
+                })
+                .ToList();
+
             CpuGraph.Push(sample.CpuUsagePercent ?? 0);
             MemoryGraph.Push(sample.MemoryUsagePercent ?? 0);
             GpuGraph.Push(sample.GpuUsagePercent ?? 0);
@@ -47,6 +56,24 @@ public partial class OverlayWindow : Window
 
     private static string FormatPercent(double? value) =>
         value.HasValue ? $"{value.Value:F0}%" : "--%";
+
+    private static string FormatDiskUsage(double usedBytes, double totalBytes, double usagePercent) =>
+        $"{FormatBytes(usedBytes)}/{FormatBytes(totalBytes)} ({usagePercent:F0}%)";
+
+    private static string FormatBytes(double bytes)
+    {
+        const double KiB = 1024;
+        const double MiB = KiB * 1024;
+        const double GiB = MiB * 1024;
+        const double TiB = GiB * 1024;
+
+        return bytes switch
+        {
+            >= TiB => $"{bytes / TiB:F2}TiB",
+            >= GiB => $"{bytes / GiB:F1}GiB",
+            _ => $"{bytes / MiB:F0}MiB",
+        };
+    }
 
     private static string FormatCpu(double? usagePercent, double? clockGHz)
     {
@@ -84,6 +111,7 @@ public partial class OverlayWindow : Window
         MemoryLabelText.Foreground = labelColor;
         GpuLabelText.Foreground = labelColor;
         VramLabelText.Foreground = labelColor;
+        DiskLabelText.Foreground = labelColor;
         NetworkIpLabelText.Foreground = labelColor;
         NetworkDnsLabelText.Foreground = labelColor;
 
@@ -91,6 +119,7 @@ public partial class OverlayWindow : Window
         MemorySection.Visibility = settings.ShowMemory ? Visibility.Visible : Visibility.Collapsed;
         GpuSection.Visibility = settings.ShowGpu ? Visibility.Visible : Visibility.Collapsed;
         VramSection.Visibility = settings.ShowVram ? Visibility.Visible : Visibility.Collapsed;
+        DiskSection.Visibility = settings.ShowDisk ? Visibility.Visible : Visibility.Collapsed;
         NetworkSection.Visibility = settings.ShowNetwork ? Visibility.Visible : Visibility.Collapsed;
     }
 

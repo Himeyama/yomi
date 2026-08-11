@@ -15,6 +15,7 @@ public sealed class SamplingService : IDisposable
     private readonly ICpuMetricsProvider _cpuProvider;
     private readonly IMemoryMetricsProvider _memoryProvider;
     private readonly IGpuMetricsProvider _gpuProvider;
+    private readonly IDiskMetricsProvider _diskProvider;
     private readonly INetworkInfoProvider _networkInfoProvider;
     private readonly Timer _timer;
 
@@ -25,12 +26,14 @@ public sealed class SamplingService : IDisposable
         ICpuMetricsProvider cpuProvider,
         IMemoryMetricsProvider memoryProvider,
         IGpuMetricsProvider gpuProvider,
+        IDiskMetricsProvider diskProvider,
         INetworkInfoProvider networkInfoProvider)
     {
         _hardwareMonitor = hardwareMonitor;
         _cpuProvider = cpuProvider;
         _memoryProvider = memoryProvider;
         _gpuProvider = gpuProvider;
+        _diskProvider = diskProvider;
         _networkInfoProvider = networkInfoProvider;
         _timer = new Timer(OnTick, null, Timeout.Infinite, Timeout.Infinite);
     }
@@ -53,6 +56,7 @@ public sealed class SamplingService : IDisposable
         var cpu = _cpuProvider.GetMetrics(hardware);
         var memory = _memoryProvider.GetMetrics(hardware);
         var gpu = _gpuProvider.GetMetrics(hardware);
+        var disks = _diskProvider.GetMetrics();
 
         if (_tickCount % NetworkInfoRefreshEveryNTicks == 0)
         {
@@ -65,6 +69,7 @@ public sealed class SamplingService : IDisposable
             memory.UsagePercent, memory.UsedGiB, memory.TotalGiB,
             gpu.UsagePercent, gpu.Name,
             gpu.VramUsagePercent, gpu.VramUsedGiB, gpu.VramTotalGiB,
+            disks,
             _lastNetworkInfo.IpAddressWithPrefix, _lastNetworkInfo.DnsServers));
     }
 
