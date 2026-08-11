@@ -15,7 +15,7 @@ public sealed class GraphControl : FrameworkElement
 
     public static readonly DependencyProperty GridBrushProperty = DependencyProperty.Register(
         nameof(GridBrush), typeof(Brush), typeof(GraphControl),
-        new FrameworkPropertyMetadata(new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)), FrameworkPropertyMetadataOptions.AffectsRender));
+        new FrameworkPropertyMetadata(new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)), FrameworkPropertyMetadataOptions.AffectsRender, OnGridBrushChanged));
 
     public static readonly DependencyProperty MaxValueProperty = DependencyProperty.Register(
         nameof(MaxValue), typeof(double), typeof(GraphControl),
@@ -36,10 +36,27 @@ public sealed class GraphControl : FrameworkElement
     /// <summary>LineBrush と同色・単色半透明の塗りつぶしブラシ。LineBrush変更時に自動更新される。</summary>
     private Brush _fillBrush = CreateFillBrush(Brushes.DeepSkyBlue);
 
+    // ペンは毎フレーム同一なので、ブラシ変更時のみ生成し直してキャッシュする(OnRender での new を避ける)。
+    private Pen _linePen = CreateFrozenPen(Brushes.DeepSkyBlue, 1.5);
+    private Pen _gridPen = CreateFrozenPen(new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)), 1);
+
     private static void OnLineBrushChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var control = (GraphControl)d;
         control._fillBrush = CreateFillBrush((Brush)e.NewValue);
+        control._linePen = CreateFrozenPen((Brush)e.NewValue, 1.5);
+    }
+
+    private static void OnGridBrushChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        ((GraphControl)d)._gridPen = CreateFrozenPen((Brush)e.NewValue, 1);
+    }
+
+    private static Pen CreateFrozenPen(Brush brush, double thickness)
+    {
+        var pen = new Pen(brush, thickness);
+        if (pen.CanFreeze) pen.Freeze();
+        return pen;
     }
 
     private static Brush CreateFillBrush(Brush lineBrush)
@@ -91,12 +108,11 @@ public sealed class GraphControl : FrameworkElement
 
     private void DrawGrid(DrawingContext dc, double width, double height)
     {
-        var pen = new Pen(GridBrush, 1);
         const int horizontalLines = 4;
         for (var i = 1; i < horizontalLines; i++)
         {
             var y = height * i / horizontalLines;
-            dc.DrawLine(pen, new Point(0, y), new Point(width, y));
+            dc.DrawLine(_gridPen, new Point(0, y), new Point(width, y));
         }
     }
 
@@ -128,14 +144,13 @@ public sealed class GraphControl : FrameworkElement
 
         dc.DrawGeometry(_fillBrush, null, geometry);
 
-        var linePen = new Pen(LineBrush, 1.5);
         for (var i = 1; i < _count; i++)
         {
             var x0 = (startIndex + i - 1) * stepX;
             var y0 = ToY(_history[i - 1], height);
             var x1 = (startIndex + i) * stepX;
             var y1 = ToY(_history[i], height);
-            dc.DrawLine(linePen, new Point(x0, y0), new Point(x1, y1));
+            dc.DrawLine(_linePen, new Point(x0, y0), new Point(x1, y1));
         }
     }
 

@@ -1,37 +1,35 @@
-using LibreHardwareMonitor.Hardware;
 using Yomi.App.Services.Providers;
-using Yomi.Tests.Fakes;
 
 namespace Yomi.Tests;
 
 public class CpuMetricsProviderTests
 {
     [Fact]
-    public void GetMetrics_UsesMaxCoreClockAndTotalLoad()
+    public void ComputeClockGHz_BoostAbove100Percent_ScalesBaseClock()
     {
-        var cpu = new FakeHardware("AMD Ryzen 9 7950X", HardwareType.Cpu,
-            new FakeSensor("CPU Total", SensorType.Load, 7f),
-            new FakeSensor("CPU Core #1", SensorType.Clock, 4140f),
-            new FakeSensor("CPU Core #2", SensorType.Clock, 3800f));
+        // ベース 3.8GHz、性能比 107% → 実効 4.066GHz
+        var result = CpuMetricsProvider.ComputeClockGHz(3800, 107);
 
-        var provider = new CpuMetricsProvider();
-        var result = provider.GetMetrics([cpu]);
-
-        Assert.Equal(7f, result.UsagePercent);
-        Assert.Equal(4.14, result.ClockGHz!.Value, precision: 2);
-        Assert.Equal("AMD Ryzen 9 7950X", result.Name);
+        Assert.Equal(4.066, result!.Value, precision: 3);
     }
 
     [Fact]
-    public void GetMetrics_NoCpuHardware_ReturnsAllNull()
+    public void ComputeClockGHz_AtBaseClock_ReturnsBaseGHz()
     {
-        var gpu = new FakeHardware("Some GPU", HardwareType.GpuNvidia);
+        var result = CpuMetricsProvider.ComputeClockGHz(3200, 100);
 
-        var provider = new CpuMetricsProvider();
-        var result = provider.GetMetrics([gpu]);
+        Assert.Equal(3.2, result!.Value, precision: 3);
+    }
 
-        Assert.Null(result.UsagePercent);
-        Assert.Null(result.ClockGHz);
-        Assert.Null(result.Name);
+    [Fact]
+    public void ComputeClockGHz_NoBaseClock_ReturnsNull()
+    {
+        Assert.Null(CpuMetricsProvider.ComputeClockGHz(null, 100));
+    }
+
+    [Fact]
+    public void ComputeClockGHz_ZeroPerformanceRatio_ReturnsNull()
+    {
+        Assert.Null(CpuMetricsProvider.ComputeClockGHz(3800, 0));
     }
 }

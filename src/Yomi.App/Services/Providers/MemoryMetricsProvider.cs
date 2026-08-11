@@ -1,27 +1,40 @@
-using LibreHardwareMonitor.Hardware;
+using Yomi.App.Interop;
 
 namespace Yomi.App.Services.Providers;
 
+/// <summary>
+/// Win32 の GlobalMemoryStatusEx で物理メモリの使用状況を取得する。
+/// カーネルドライバに依存しない軽量な取得方法。
+/// </summary>
 public sealed class MemoryMetricsProvider : IMemoryMetricsProvider
 {
-    public MemoryMetrics GetMetrics(IReadOnlyList<IHardware> hardware)
+    private const double BytesPerGiB = 1024.0 * 1024.0 * 1024.0;
+
+    public MemoryMetrics GetMetrics()
     {
-        var memory = hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Memory);
-        if (memory is null) return new MemoryMetrics(null, null, null);
+        var status = new NativeMethods.MEMORYSTATUSEX
+        {
+            dwLength = (uint)System.Runtime.InteropServices.Marshal.SizeOf<NativeMethods.MEMORYSTATUSEX>(),
+        };
 
-        var load = memory.Sensors.FirstOrDefault(s =>
-            s.SensorType == SensorType.Load && s.Name == "Memory");
+        if (!NativeMethods.GlobalMemoryStatusEx(ref status))
+        {
+            return new MemoryMetrics(null, null, null);
+        }
 
-        // LibreHardwareMonitorLibのMemoryセンサーはGB(GiB相当)単位で値を返す。
-        var used = memory.Sensors.FirstOrDefault(s =>
-            s.SensorType == SensorType.Data && s.Name == "Memory Used");
-        var available = memory.Sensors.FirstOrDefault(s =>
-            s.SensorType == SensorType.Data && s.Name == "Memory Available");
+        return Compute(status.ullTotalPhys, status.ullAvailPhys);
+    }
 
-        double? totalGiB = used?.Value.HasValue == true && available?.Value.HasValue == true
-            ? used.Value.Value + available.Value.Value
-            : null;
+    /// <summary>総物理メモリと空き物理メモリ(バイト)から使用率・使用量・総量を求める。</summary>
+    public static MemoryMetrics Compute(ulong totalBytes, ulong availableBytes)
+    {
+        if (totalBytes == 0) return new MemoryMetrics(null, null, null);
 
-        return new MemoryMetrics(load?.Value, used?.Value, totalGiB);
+        var usedBytes = totalBytes - availableBytes;
+        var usagePercent = (double)usedBytes / totalBytes * 100.0;
+        var usedGiB = usedBytes / BytesPerGiB;
+        var totalGiB = totalBytes / BytesPerGiB;
+
+        return new MemoryMetrics(usagePercent, usedGiB, totalGiB);
     }
 }

@@ -37,7 +37,6 @@ public partial class App : Application
         EnsureAutoStartRegistration(settings);
 
         _samplingService = new SamplingService(
-            new HardwareMonitorService(),
             new CpuMetricsProvider(),
             new MemoryMetricsProvider(),
             new GpuMetricsProvider(),

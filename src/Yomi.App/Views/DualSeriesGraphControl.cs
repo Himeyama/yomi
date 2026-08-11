@@ -11,21 +11,21 @@ public sealed class DualSeriesGraphControl : FrameworkElement
 {
     public static readonly DependencyProperty PrimaryLineBrushProperty = DependencyProperty.Register(
         nameof(PrimaryLineBrush), typeof(Brush), typeof(DualSeriesGraphControl),
-        new FrameworkPropertyMetadata(Brushes.DeepSkyBlue, FrameworkPropertyMetadataOptions.AffectsRender));
+        new FrameworkPropertyMetadata(Brushes.DeepSkyBlue, FrameworkPropertyMetadataOptions.AffectsRender, OnPrimaryPenChanged));
 
     public static readonly DependencyProperty SecondaryLineBrushProperty = DependencyProperty.Register(
         nameof(SecondaryLineBrush), typeof(Brush), typeof(DualSeriesGraphControl),
-        new FrameworkPropertyMetadata(Brushes.OrangeRed, FrameworkPropertyMetadataOptions.AffectsRender));
+        new FrameworkPropertyMetadata(Brushes.OrangeRed, FrameworkPropertyMetadataOptions.AffectsRender, OnSecondaryPenChanged));
 
     /// <summary>プライマリ系列の線の太さ。2系列を同色にする場合の見分けに使う。</summary>
     public static readonly DependencyProperty PrimaryLineThicknessProperty = DependencyProperty.Register(
         nameof(PrimaryLineThickness), typeof(double), typeof(DualSeriesGraphControl),
-        new FrameworkPropertyMetadata(1.5, FrameworkPropertyMetadataOptions.AffectsRender));
+        new FrameworkPropertyMetadata(1.5, FrameworkPropertyMetadataOptions.AffectsRender, OnPrimaryPenChanged));
 
     /// <summary>セカンダリ系列の線の太さ。2系列を同色にする場合の見分けに使う。</summary>
     public static readonly DependencyProperty SecondaryLineThicknessProperty = DependencyProperty.Register(
         nameof(SecondaryLineThickness), typeof(double), typeof(DualSeriesGraphControl),
-        new FrameworkPropertyMetadata(1.5, FrameworkPropertyMetadataOptions.AffectsRender));
+        new FrameworkPropertyMetadata(1.5, FrameworkPropertyMetadataOptions.AffectsRender, OnSecondaryPenChanged));
 
     public double PrimaryLineThickness
     {
@@ -41,7 +41,36 @@ public sealed class DualSeriesGraphControl : FrameworkElement
 
     public static readonly DependencyProperty GridBrushProperty = DependencyProperty.Register(
         nameof(GridBrush), typeof(Brush), typeof(DualSeriesGraphControl),
-        new FrameworkPropertyMetadata(new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)), FrameworkPropertyMetadataOptions.AffectsRender));
+        new FrameworkPropertyMetadata(new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)), FrameworkPropertyMetadataOptions.AffectsRender, OnGridBrushChanged));
+
+    // ペンは毎フレーム同一なので、ブラシ/太さ変更時のみ生成し直してキャッシュする(OnRender での new を避ける)。
+    private Pen _primaryPen = CreateFrozenPen(Brushes.DeepSkyBlue, 1.5);
+    private Pen _secondaryPen = CreateFrozenPen(Brushes.OrangeRed, 1.5);
+    private Pen _gridPen = CreateFrozenPen(new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)), 1);
+
+    private static void OnPrimaryPenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var control = (DualSeriesGraphControl)d;
+        control._primaryPen = CreateFrozenPen(control.PrimaryLineBrush, control.PrimaryLineThickness);
+    }
+
+    private static void OnSecondaryPenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var control = (DualSeriesGraphControl)d;
+        control._secondaryPen = CreateFrozenPen(control.SecondaryLineBrush, control.SecondaryLineThickness);
+    }
+
+    private static void OnGridBrushChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        ((DualSeriesGraphControl)d)._gridPen = CreateFrozenPen((Brush)e.NewValue, 1);
+    }
+
+    private static Pen CreateFrozenPen(Brush brush, double thickness)
+    {
+        var pen = new Pen(brush, thickness);
+        if (pen.CanFreeze) pen.Freeze();
+        return pen;
+    }
 
     public Brush PrimaryLineBrush
     {
@@ -103,28 +132,26 @@ public sealed class DualSeriesGraphControl : FrameworkElement
             scaleMax = Math.Max(scaleMax, Math.Max(_primaryHistory[i], _secondaryHistory[i]));
         }
 
-        DrawSeries(dc, width, height, _secondaryHistory, SecondaryLineBrush, SecondaryLineThickness, scaleMax);
-        DrawSeries(dc, width, height, _primaryHistory, PrimaryLineBrush, PrimaryLineThickness, scaleMax);
+        DrawSeries(dc, width, height, _secondaryHistory, _secondaryPen, scaleMax);
+        DrawSeries(dc, width, height, _primaryHistory, _primaryPen, scaleMax);
     }
 
     private void DrawGrid(DrawingContext dc, double width, double height)
     {
-        var pen = new Pen(GridBrush, 1);
         const int horizontalLines = 4;
         for (var i = 1; i < horizontalLines; i++)
         {
             var y = height * i / horizontalLines;
-            dc.DrawLine(pen, new Point(0, y), new Point(width, y));
+            dc.DrawLine(_gridPen, new Point(0, y), new Point(width, y));
         }
     }
 
-    private void DrawSeries(DrawingContext dc, double width, double height, double[] history, Brush lineBrush, double lineThickness, double scaleMax)
+    private void DrawSeries(DrawingContext dc, double width, double height, double[] history, Pen linePen, double scaleMax)
     {
         var stepX = width / (HistorySeconds - 1);
         // リングバッファ末尾（最新値）が右端に来るよう、有効なサンプル数ぶんだけ右寄せで描画する。
         var startIndex = HistorySeconds - _count;
 
-        var linePen = new Pen(lineBrush, lineThickness);
         for (var i = 1; i < _count; i++)
         {
             var x0 = (startIndex + i - 1) * stepX;

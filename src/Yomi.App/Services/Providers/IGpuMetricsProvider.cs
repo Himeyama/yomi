@@ -1,5 +1,3 @@
-using LibreHardwareMonitor.Hardware;
-
 namespace Yomi.App.Services.Providers;
 
 public readonly record struct GpuMetrics(
@@ -11,5 +9,5 @@ public readonly record struct GpuMetrics(
 
 public interface IGpuMetricsProvider
 {
-    GpuMetrics GetMetrics(IReadOnlyList<IHardware> hardware);
+    GpuMetrics GetMetrics();
 }

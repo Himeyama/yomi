@@ -13,9 +13,8 @@ public sealed class NetworkInfoProvider : INetworkInfoProvider
     private long? _lastBytesReceived;
     private DateTime? _lastSampleTime;
 
-    public NetworkInfo GetNetworkInfo()
+    public NetworkInfo GetNetworkInfo(NetworkInterface? nic)
     {
-        var nic = GetPrimaryInterface();
         if (nic is null) return new NetworkInfo(null, null);
 
         var props = nic.GetIPProperties();
@@ -32,9 +31,8 @@ public sealed class NetworkInfoProvider : INetworkInfoProvider
         return new NetworkInfo(ipWithPrefix, string.IsNullOrEmpty(dnsJoined) ? null : dnsJoined);
     }
 
-    public NetworkSpeed GetSpeed()
+    public NetworkSpeed GetSpeed(NetworkInterface? nic)
     {
-        var nic = GetPrimaryInterface();
         if (nic is null)
         {
             _lastBytesSent = null;
@@ -66,7 +64,7 @@ public sealed class NetworkInfoProvider : INetworkInfoProvider
         return speed;
     }
 
-    private static NetworkInterface? GetPrimaryInterface() =>
+    public NetworkInterface? GetPrimaryInterface() =>
         NetworkInterface.GetAllNetworkInterfaces()
             .Where(n => n.OperationalStatus == OperationalStatus.Up)
             .Where(n => n.NetworkInterfaceType != NetworkInterfaceType.Loopback)

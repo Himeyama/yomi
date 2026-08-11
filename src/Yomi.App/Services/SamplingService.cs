@@ -4,14 +4,13 @@ using Yomi.App.Services.Providers;
 namespace Yomi.App.Services;
 
 /// <summary>
-/// 1秒間隔でハードウェアセンサーを更新し、MetricSampleを配信する。
+/// 1秒間隔で各プロバイダからメトリクスを取得し、MetricSampleを配信する。
 /// UIスレッドをブロックしないよう独立したタイマースレッドで動作する。
 /// </summary>
 public sealed class SamplingService : IDisposable
 {
     private static readonly TimeSpan Interval = TimeSpan.FromSeconds(1);
 
-    private readonly HardwareMonitorService _hardwareMonitor;
     private readonly ICpuMetricsProvider _cpuProvider;
     private readonly IMemoryMetricsProvider _memoryProvider;
     private readonly IGpuMetricsProvider _gpuProvider;
@@ -22,14 +21,12 @@ public sealed class SamplingService : IDisposable
     public event Action<MetricSample>? SampleUpdated;
 
     public SamplingService(
-        HardwareMonitorService hardwareMonitor,
         ICpuMetricsProvider cpuProvider,
         IMemoryMetricsProvider memoryProvider,
         IGpuMetricsProvider gpuProvider,
         IDiskMetricsProvider diskProvider,
         INetworkInfoProvider networkInfoProvider)
     {
-        _hardwareMonitor = hardwareMonitor;
         _cpuProvider = cpuProvider;
         _memoryProvider = memoryProvider;
         _gpuProvider = gpuProvider;
@@ -38,11 +35,7 @@ public sealed class SamplingService : IDisposable
         _timer = new Timer(OnTick, null, Timeout.Infinite, Timeout.Infinite);
     }
 
-    public void Start()
-    {
-        _hardwareMonitor.Open();
-        _timer.Change(TimeSpan.Zero, Interval);
-    }
+    public void Start() => _timer.Change(TimeSpan.Zero, Interval);
 
     private const int NetworkInfoRefreshEveryNTicks = 5;
     private int _tickCount;
@@ -50,18 +43,18 @@ public sealed class SamplingService : IDisposable
 
     private void OnTick(object? state)
     {
-        _hardwareMonitor.Update();
-
-        var hardware = _hardwareMonitor.Hardware;
-        var cpu = _cpuProvider.GetMetrics(hardware);
-        var memory = _memoryProvider.GetMetrics(hardware);
-        var gpu = _gpuProvider.GetMetrics(hardware);
+        var cpu = _cpuProvider.GetMetrics();
+        var memory = _memoryProvider.GetMetrics();
+        var gpu = _gpuProvider.GetMetrics();
         var disks = _diskProvider.GetMetrics();
-        var speed = _networkInfoProvider.GetSpeed();
+
+        // 主要NICの解決は全アダプター列挙を伴い比較的重いので、1ティックにつき一度だけ行い共有する。
+        var nic = _networkInfoProvider.GetPrimaryInterface();
+        var speed = _networkInfoProvider.GetSpeed(nic);
 
         if (_tickCount % NetworkInfoRefreshEveryNTicks == 0)
         {
-            _lastNetworkInfo = _networkInfoProvider.GetNetworkInfo();
+            _lastNetworkInfo = _networkInfoProvider.GetNetworkInfo(nic);
         }
         _tickCount++;
 
@@ -78,6 +71,6 @@ public sealed class SamplingService : IDisposable
     public void Dispose()
     {
         _timer.Dispose();
-        _hardwareMonitor.Dispose();
+        (_cpuProvider as IDisposable)?.Dispose();
     }
 }

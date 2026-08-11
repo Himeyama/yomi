@@ -1,37 +1,38 @@
-using LibreHardwareMonitor.Hardware;
 using Yomi.App.Services.Providers;
-using Yomi.Tests.Fakes;
 
 namespace Yomi.Tests;
 
 public class MemoryMetricsProviderTests
 {
+    private const ulong GiB = 1024UL * 1024 * 1024;
+
     [Fact]
-    public void GetMetrics_ComputesTotalFromUsedAndAvailable()
+    public void Compute_UsedIsTotalMinusAvailable()
     {
-        var memory = new FakeHardware("Memory", HardwareType.Memory,
-            new FakeSensor("Memory", SensorType.Load, 34f),
-            new FakeSensor("Memory Used", SensorType.Data, 43f),
-            new FakeSensor("Memory Available", SensorType.Data, 85f));
+        // 総 16GiB、空き 6GiB → 使用 10GiB、使用率 62.5%
+        var result = MemoryMetricsProvider.Compute(16 * GiB, 6 * GiB);
 
-        var provider = new MemoryMetricsProvider();
-        var result = provider.GetMetrics([memory]);
-
-        Assert.Equal(34f, result.UsagePercent);
-        Assert.Equal(43f, result.UsedGiB);
-        Assert.Equal(128.0, result.TotalGiB!.Value, precision: 3);
+        Assert.Equal(62.5, result.UsagePercent!.Value, precision: 3);
+        Assert.Equal(10.0, result.UsedGiB!.Value, precision: 3);
+        Assert.Equal(16.0, result.TotalGiB!.Value, precision: 3);
     }
 
     [Fact]
-    public void GetMetrics_NoMemoryHardware_ReturnsAllNull()
+    public void Compute_ZeroTotal_ReturnsAllNull()
     {
-        var cpu = new FakeHardware("Some CPU", HardwareType.Cpu);
-
-        var provider = new MemoryMetricsProvider();
-        var result = provider.GetMetrics([cpu]);
+        var result = MemoryMetricsProvider.Compute(0, 0);
 
         Assert.Null(result.UsagePercent);
         Assert.Null(result.UsedGiB);
         Assert.Null(result.TotalGiB);
+    }
+
+    [Fact]
+    public void Compute_FullyAvailable_ZeroUsage()
+    {
+        var result = MemoryMetricsProvider.Compute(8 * GiB, 8 * GiB);
+
+        Assert.Equal(0.0, result.UsagePercent!.Value, precision: 3);
+        Assert.Equal(0.0, result.UsedGiB!.Value, precision: 3);
     }
 }
