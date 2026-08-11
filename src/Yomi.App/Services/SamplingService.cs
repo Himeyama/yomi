@@ -57,6 +57,7 @@ public sealed class SamplingService : IDisposable
         var memory = _memoryProvider.GetMetrics(hardware);
         var gpu = _gpuProvider.GetMetrics(hardware);
         var disks = _diskProvider.GetMetrics();
+        var speed = _networkInfoProvider.GetSpeed();
 
         if (_tickCount % NetworkInfoRefreshEveryNTicks == 0)
         {
@@ -70,7 +71,8 @@ public sealed class SamplingService : IDisposable
             gpu.UsagePercent, gpu.Name,
             gpu.VramUsagePercent, gpu.VramUsedGiB, gpu.VramTotalGiB,
             disks,
-            _lastNetworkInfo.IpAddressWithPrefix, _lastNetworkInfo.DnsServers));
+            _lastNetworkInfo.IpAddressWithPrefix, _lastNetworkInfo.DnsServers,
+            speed.UploadMbps, speed.DownloadMbps));
     }
 
     public void Dispose()

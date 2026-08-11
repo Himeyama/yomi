@@ -17,4 +17,6 @@ public readonly record struct MetricSample(
     double? VramTotalGiB,
     IReadOnlyList<DiskDriveMetric> Disks,
     string? IpAddressWithPrefix,
-    string? DnsServers);
+    string? DnsServers,
+    double UploadMbps,
+    double DownloadMbps);

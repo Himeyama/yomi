@@ -12,8 +12,8 @@ public sealed class DiskUsageBar : FrameworkElement
     private const double LowSpaceThresholdPercent = 10.0;
 
     private static readonly Brush BackgroundBrush = CreateFrozenBrush(Color.FromArgb(40, 255, 255, 255));
-    private static readonly Brush NormalBrush = CreateFrozenBrush(Color.FromArgb(255, 127, 219, 255));
-    private static readonly Brush WarningBrush = CreateFrozenBrush(Color.FromArgb(255, 255, 64, 64));
+    private static readonly Brush NormalBrush = CreateFrozenBrush(Color.FromArgb(255, 0x00, 0x70, 0xCB));
+    private static readonly Brush WarningBrush = CreateFrozenBrush(Color.FromArgb(255, 0xC4, 0x2B, 0x1C));
 
     public static readonly DependencyProperty UsagePercentProperty = DependencyProperty.Register(
         nameof(UsagePercent), typeof(double), typeof(DiskUsageBar),

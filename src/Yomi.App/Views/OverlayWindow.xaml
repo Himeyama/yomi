@@ -19,10 +19,10 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="CpuLabelText" Grid.Column="0" Text="CPU" Foreground="White" FontSize="11"/>
-                    <TextBlock x:Name="CpuValueText" Grid.Column="1" Text="--%" Foreground="#7FDBFF" FontSize="14"/>
+                    <TextBlock x:Name="CpuValueText" Grid.Column="1" Text="--%" Foreground="#006F91" FontSize="14"/>
                 </Grid>
                 <TextBlock x:Name="CpuNameText" Text="--" Foreground="#999999" FontSize="9" Margin="0,0,0,4" TextWrapping="Wrap"/>
-                <local:GraphControl x:Name="CpuGraph" Height="90" LineBrush="#7FDBFF" Margin="0,0,0,10"/>
+                <local:GraphControl x:Name="CpuGraph" Height="90" LineBrush="#006F91" Margin="0,0,0,10"/>
             </StackPanel>
 
             <StackPanel x:Name="MemorySection">
@@ -32,9 +32,9 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="MemoryLabelText" Grid.Column="0" Text="メモリ" Foreground="White" FontSize="11"/>
-                    <TextBlock x:Name="MemoryValueText" Grid.Column="1" Text="--" Foreground="#B6F542" FontSize="14"/>
+                    <TextBlock x:Name="MemoryValueText" Grid.Column="1" Text="--" Foreground="#095BDE" FontSize="14"/>
                 </Grid>
-                <local:GraphControl x:Name="MemoryGraph" Height="90" LineBrush="#B6F542" Margin="0,0,0,10"/>
+                <local:GraphControl x:Name="MemoryGraph" Height="90" LineBrush="#095BDE" Margin="0,0,0,10"/>
             </StackPanel>
 
             <StackPanel x:Name="GpuSection">
@@ -44,10 +44,10 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="GpuLabelText" Grid.Column="0" Text="GPU" Foreground="White" FontSize="11"/>
-                    <TextBlock x:Name="GpuValueText" Grid.Column="1" Text="--%" Foreground="#FFB347" FontSize="14"/>
+                    <TextBlock x:Name="GpuValueText" Grid.Column="1" Text="--%" Foreground="#7E13F0" FontSize="14"/>
                 </Grid>
                 <TextBlock x:Name="GpuNameText" Text="--" Foreground="#999999" FontSize="9" Margin="0,0,0,4" TextWrapping="Wrap"/>
-                <local:GraphControl x:Name="GpuGraph" Height="90" LineBrush="#FFB347" Margin="0,0,0,10"/>
+                <local:GraphControl x:Name="GpuGraph" Height="90" LineBrush="#7E13F0" Margin="0,0,0,10"/>
             </StackPanel>
 
             <StackPanel x:Name="VramSection">
@@ -57,9 +57,9 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="VramLabelText" Grid.Column="0" Text="VRAM" Foreground="White" FontSize="11"/>
-                    <TextBlock x:Name="VramValueText" Grid.Column="1" Text="--" Foreground="#FF7F9E" FontSize="14"/>
+                    <TextBlock x:Name="VramValueText" Grid.Column="1" Text="--" Foreground="#B968F0" FontSize="14"/>
                 </Grid>
-                <local:GraphControl x:Name="VramGraph" Height="90" LineBrush="#FF7F9E" Margin="0,0,0,10"/>
+                <local:GraphControl x:Name="VramGraph" Height="90" LineBrush="#B968F0" Margin="0,0,0,10"/>
             </StackPanel>
 
             <StackPanel x:Name="DiskSection" Margin="0,0,0,10">
@@ -74,7 +74,7 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="{Binding Name}" Foreground="#CCCCCC" FontSize="10"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding UsageText}" Foreground="#5FE0C0" FontSize="10"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding UsageText}" Foreground="#0070CB" FontSize="10"/>
                                 </Grid>
                                 <local:DiskUsageBar Height="8" UsagePercent="{Binding UsagePercent}"/>
                             </StackPanel>
@@ -84,6 +84,24 @@
             </StackPanel>
 
             <StackPanel x:Name="NetworkSection">
+                <Grid Margin="0,0,0,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="NetworkSpeedLabelText" Grid.Column="0" Text="ネットワーク" Foreground="White" FontSize="11"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <TextBlock Text="&#8593;" Foreground="#BF174F" FontSize="11" Margin="0,0,2,0"/>
+                        <TextBlock x:Name="UploadSpeedText" Text="--" Foreground="#BF174F" FontSize="12" Margin="0,0,8,0"/>
+                        <TextBlock Text="&#8595;" Foreground="#BF174F" FontSize="11" Margin="0,0,2,0"/>
+                        <TextBlock x:Name="DownloadSpeedText" Text="--" Foreground="#BF174F" FontSize="12"/>
+                    </StackPanel>
+                </Grid>
+                <local:DualSeriesGraphControl x:Name="NetworkGraph" Height="60"
+                                               PrimaryLineBrush="#BF174F" PrimaryLineThickness="1.5"
+                                               SecondaryLineBrush="#BF174F" SecondaryLineThickness="3"
+                                               Margin="0,0,0,6"/>
+
                 <Grid Margin="0,0,0,2">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>

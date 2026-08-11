@@ -37,6 +37,8 @@ public partial class OverlayWindow : Window
             VramValueText.Text = FormatUsageOverTotal(sample.VramUsedGiB, sample.VramTotalGiB);
             IpAddressText.Text = sample.IpAddressWithPrefix ?? "--";
             DnsText.Text = sample.DnsServers ?? "--";
+            UploadSpeedText.Text = FormatMbps(sample.UploadMbps);
+            DownloadSpeedText.Text = FormatMbps(sample.DownloadMbps);
 
             DiskItemsControl.ItemsSource = sample.Disks
                 .Select(d => new DiskDriveDisplayItem
@@ -51,11 +53,14 @@ public partial class OverlayWindow : Window
             MemoryGraph.Push(sample.MemoryUsagePercent ?? 0);
             GpuGraph.Push(sample.GpuUsagePercent ?? 0);
             VramGraph.Push(sample.VramUsagePercent ?? 0);
+            NetworkGraph.Push(sample.DownloadMbps, sample.UploadMbps);
         }, DispatcherPriority.Background);
     }
 
     private static string FormatPercent(double? value) =>
         value.HasValue ? $"{value.Value:F0}%" : "--%";
+
+    private static string FormatMbps(double value) => $"{value:F1}Mbps";
 
     private static string FormatDiskUsage(double usedBytes, double totalBytes, double usagePercent) =>
         $"{FormatBytes(usedBytes)}/{FormatBytes(totalBytes)} ({usagePercent:F0}%)";
@@ -112,6 +117,7 @@ public partial class OverlayWindow : Window
         GpuLabelText.Foreground = labelColor;
         VramLabelText.Foreground = labelColor;
         DiskLabelText.Foreground = labelColor;
+        NetworkSpeedLabelText.Foreground = labelColor;
         NetworkIpLabelText.Foreground = labelColor;
         NetworkDnsLabelText.Foreground = labelColor;
 
