@@ -1,11 +1,11 @@
 using System.Diagnostics;
-using System.Management;
+using Microsoft.Win32;
 
 namespace Yomi.App.Services.Providers;
 
 /// <summary>
-/// Windows のパフォーマンスカウンターと WMI のみで CPU メトリクスを取得する。
-/// カーネルドライバ(WinRing0)に依存しないため、ウイルス対策ソフトの脆弱ドライバ検知を受けない。
+/// Windows のパフォーマンスカウンターとレジストリのみで CPU メトリクスを取得する。
+/// カーネルドライバ(WinRing0)にも WMI にも依存しない。
 /// </summary>
 public sealed class CpuMetricsProvider : ICpuMetricsProvider, IDisposable
 {
@@ -23,7 +23,7 @@ public sealed class CpuMetricsProvider : ICpuMetricsProvider, IDisposable
 
     public CpuMetrics GetMetrics()
     {
-        // WMI クエリはコンストラクタ(UIスレッド)ではなく、初回サンプリング時(タイマースレッド)に遅延実行する。
+        // レジストリ参照はコンストラクタ(UIスレッド)ではなく、初回サンプリング時(タイマースレッド)に遅延実行する。
         if (!_cpuInfoQueried)
         {
             (_name, _baseClockMHz) = QueryCpuInfo();
@@ -45,25 +45,31 @@ public sealed class CpuMetricsProvider : ICpuMetricsProvider, IDisposable
         return baseClockMHz.Value * performanceRatio / 100.0 / 1000.0;
     }
 
+    /// <summary>
+    /// CPU の名前とベースクロック(MHz)をレジストリから取得する。
+    /// WMI(System.Management)を避けることで、WMI インフラの初期化コストと
+    /// アセンブリのロードを回避する。
+    /// - 名前: "ProcessorNameString"(REG_SZ)
+    /// - ベースクロック: "~MHz"(REG_DWORD、定格クロックのMHz値)
+    /// </summary>
     private static (string? Name, double? BaseClockMHz) QueryCpuInfo()
     {
+        const string cpuKeyPath = @"HARDWARE\DESCRIPTION\System\CentralProcessor\0";
+
         try
         {
-            using var searcher = new ManagementObjectSearcher(
-                "SELECT Name, MaxClockSpeed FROM Win32_Processor");
-            foreach (var obj in searcher.Get())
-            {
-                var name = (obj["Name"] as string)?.Trim();
-                var baseClock = obj["MaxClockSpeed"] is uint mhz ? (double?)mhz : null;
-                return (name, baseClock);
-            }
-        }
-        catch (ManagementException)
-        {
-            // WMI が利用できない環境では名前・クロックなしで動作を継続する。
-        }
+            using var key = Registry.LocalMachine.OpenSubKey(cpuKeyPath);
+            if (key is null) return (null, null);
 
-        return (null, null);
+            var name = (key.GetValue("ProcessorNameString") as string)?.Trim();
+            var baseClock = key.GetValue("~MHz") is int mhz and > 0 ? (double?)mhz : null;
+            return (name, baseClock);
+        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException)
+        {
+            // レジストリが参照できない環境では名前・クロックなしで動作を継続する。
+            return (null, null);
+        }
     }
 
     public void Dispose()

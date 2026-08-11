@@ -13,11 +13,18 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <!-- 常駐監視ツールのため、ヒープを小さく保つワークステーションGC・非並行GCを使う。
+         サーバーGCは複数ヒープを確保し作業セットが増えるため無効化する。 -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <!-- 使わなくなったメモリを OS に返却しやすくし、アイドル時の作業セットを抑える。 -->
+    <RetainVMGarbageCollection>false</RetainVMGarbageCollection>
+    <TieredCompilation>true</TieredCompilation>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="8.0.1" />
-    <PackageReference Include="System.Management" Version="8.0.0" />
     <PackageReference Include="TaskScheduler" Version="2.11.0" />
   </ItemGroup>
 
