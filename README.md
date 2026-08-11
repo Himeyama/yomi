@@ -2,7 +2,7 @@
 
 デスクトップ上に半透明の「透かし」として常駐する、Windows向けタスクマネージャー風モニタリングアプリ。
 
-<img width="300" src="https://github.com/user-attachments/assets/96ad296a-304e-44a0-be59-bca16bf25a3e" />
+<img width="300" src="https://github.com/user-attachments/assets/195ebfee-5852-4b89-8cb3-b623ee04b867" />
 
 CPU / メモリ / GPU / VRAM の使用率を、数値とタスクマネージャー風の時系列グラフで表示する。IPアドレス・DNSサーバー情報も併せて表示する。
 
