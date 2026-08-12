@@ -31,10 +31,10 @@ public partial class OverlayWindow : Window
         {
             CpuValueText.Text = FormatCpu(sample.CpuUsagePercent, sample.CpuClockGHz);
             CpuNameText.Text = sample.CpuName ?? "--";
-            MemoryValueText.Text = FormatUsageOverTotal(sample.MemoryUsedGiB, sample.MemoryTotalGiB);
+            MemoryValueText.Text = FormatUsageOverTotal(sample.MemoryUsedGiB, sample.MemoryTotalGiB, sample.MemoryUsagePercent);
             GpuValueText.Text = FormatPercent(sample.GpuUsagePercent);
             GpuNameText.Text = sample.GpuName ?? "--";
-            VramValueText.Text = FormatUsageOverTotal(sample.VramUsedGiB, sample.VramTotalGiB);
+            VramValueText.Text = FormatUsageOverTotal(sample.VramUsedGiB, sample.VramTotalGiB, sample.VramUsagePercent);
             IpAddressText.Text = sample.IpAddressWithPrefix ?? "--";
             DnsText.Text = sample.DnsServers ?? "--";
             UploadSpeedText.Text = FormatMbps(sample.UploadMbps);
@@ -88,10 +88,12 @@ public partial class OverlayWindow : Window
             : $"{usagePercent.Value:F0}%";
     }
 
-    private static string FormatUsageOverTotal(double? usedGiB, double? totalGiB)
+    private static string FormatUsageOverTotal(double? usedGiB, double? totalGiB, double? usagePercent)
     {
         if (!usedGiB.HasValue || !totalGiB.HasValue) return "--";
-        return $"{usedGiB.Value:F0}GiB/{totalGiB.Value:F0}GiB";
+        return usagePercent.HasValue
+            ? $"{usedGiB.Value:F0}/{totalGiB.Value:F0} GiB ({usagePercent.Value:F0}%)"
+            : $"{usedGiB.Value:F0}/{totalGiB.Value:F0} GiB";
     }
 
     /// <summary>指定した画面の右上に、余白を空けて配置する。</summary>
