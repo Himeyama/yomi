@@ -62,22 +62,24 @@ public partial class OverlayWindow : Window
 
     private static string FormatMbps(double value) => $"{value:F1}Mbps";
 
-    private static string FormatDiskUsage(double usedBytes, double totalBytes, double usagePercent) =>
-        $"{FormatBytes(usedBytes)}/{FormatBytes(totalBytes)} ({usagePercent:F0}%)";
-
-    private static string FormatBytes(double bytes)
+    private static string FormatDiskUsage(double usedBytes, double totalBytes, double usagePercent)
     {
         const double KiB = 1024;
         const double MiB = KiB * 1024;
         const double GiB = MiB * 1024;
         const double TiB = GiB * 1024;
 
-        return bytes switch
+        // 使用量・総量は総量の大きさに応じた同一単位・同一桁数で揃えて表示する。
+        var (unit, unitLabel, decimals) = totalBytes switch
         {
-            >= TiB => $"{bytes / TiB:F2}TiB",
-            >= GiB => $"{bytes / GiB:F1}GiB",
-            _ => $"{bytes / MiB:F0}MiB",
+            >= TiB => (TiB, "TiB", 2),
+            >= GiB => (GiB, "GiB", 1),
+            _ => (MiB, "MiB", 0),
         };
+
+        var usedText = (usedBytes / unit).ToString($"F{decimals}");
+        var totalText = (totalBytes / unit).ToString($"F{decimals}");
+        return $"{usedText}/{totalText} {unitLabel} ({usagePercent:F0}%)";
     }
 
     private static string FormatCpu(double? usagePercent, double? clockGHz)
