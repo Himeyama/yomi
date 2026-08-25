@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -11,12 +12,39 @@ public partial class OverlayWindow : Window
 {
     private readonly ClickThroughWindowBehavior _clickThrough = new();
     private readonly SamplingService _samplingService;
+    private readonly DispatcherTimer _clockTimer;
+    private static readonly JapaneseCalendar JapaneseEraCalendar = new();
+    private static readonly CultureInfo JapaneseEraCulture = CreateJapaneseEraCulture();
 
     public OverlayWindow(SamplingService samplingService)
     {
         InitializeComponent();
         _samplingService = samplingService;
         _samplingService.SampleUpdated += OnSampleUpdated;
+
+        _clockTimer = new DispatcherTimer(DispatcherPriority.Background)
+        {
+            Interval = TimeSpan.FromSeconds(1),
+        };
+        _clockTimer.Tick += (_, _) => UpdateClock();
+        UpdateClock();
+        _clockTimer.Start();
+    }
+
+    private static CultureInfo CreateJapaneseEraCulture()
+    {
+        var culture = new CultureInfo("ja-JP");
+        culture.DateTimeFormat.Calendar = JapaneseEraCalendar;
+        return culture;
+    }
+
+    private void UpdateClock()
+    {
+        var now = DateTime.Now;
+        var era = now.ToString("gg", JapaneseEraCulture);
+        var eraYear = JapaneseEraCalendar.GetYear(now);
+        ClockDateText.Text = $"{era} {eraYear} 年 ({now.Year} 年) {now.Month} 月 {now.Day} 日";
+        ClockTimeText.Text = now.ToString("HH:mm:ss");
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -129,6 +157,8 @@ public partial class OverlayWindow : Window
         BackgroundBorder.Background = new SolidColorBrush(Color.FromArgb(alpha, baseColor.R, baseColor.G, baseColor.B));
 
         var labelColor = isWhiteTheme ? Brushes.Black : Brushes.White;
+        ClockDateText.Foreground = labelColor;
+        ClockTimeText.Foreground = labelColor;
         CpuLabelText.Foreground = labelColor;
         MemoryLabelText.Foreground = labelColor;
         GpuLabelText.Foreground = labelColor;
@@ -153,6 +183,7 @@ public partial class OverlayWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        _clockTimer.Stop();
         _samplingService.SampleUpdated -= OnSampleUpdated;
         _clickThrough.Dispose();
         base.OnClosed(e);

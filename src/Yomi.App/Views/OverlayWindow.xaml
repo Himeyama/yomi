@@ -24,6 +24,13 @@
             <SolidColorBrush x:Key="SecondaryTextBrush" Color="#999999"/>
         </Border.Resources>
         <StackPanel>
+            <StackPanel x:Name="ClockSection" Margin="0,0,0,10">
+                <TextBlock x:Name="ClockDateText" Text="--" Foreground="White" FontSize="11"
+                           HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                <TextBlock x:Name="ClockTimeText" Text="--:--:--" Foreground="White" FontSize="46" FontWeight="Bold"
+                           FontFamily="Consolas" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+            </StackPanel>
+
             <StackPanel x:Name="CpuSection">
                 <Grid Margin="0,0,0,2">
                     <Grid.ColumnDefinitions>
