@@ -22,6 +22,7 @@ public partial class SettingsWindow : Window
         OpacityValueText.Text = FormatOpacity(_settings.Opacity);
         BackgroundBlackRadio.IsChecked = _settings.BackgroundColor == OverlayBackgroundColor.Black;
         BackgroundWhiteRadio.IsChecked = _settings.BackgroundColor == OverlayBackgroundColor.White;
+        ShowClockCheck.IsChecked = _settings.ShowClock;
         ShowCpuCheck.IsChecked = _settings.ShowCpu;
         ShowMemoryCheck.IsChecked = _settings.ShowMemory;
         ShowGpuCheck.IsChecked = _settings.ShowGpu;
@@ -47,6 +48,7 @@ public partial class SettingsWindow : Window
             BackgroundColor = BackgroundWhiteRadio.IsChecked == true
                 ? OverlayBackgroundColor.White
                 : OverlayBackgroundColor.Black,
+            ShowClock = ShowClockCheck.IsChecked ?? true,
             ShowCpu = ShowCpuCheck.IsChecked ?? true,
             ShowMemory = ShowMemoryCheck.IsChecked ?? true,
             ShowGpu = ShowGpuCheck.IsChecked ?? true,

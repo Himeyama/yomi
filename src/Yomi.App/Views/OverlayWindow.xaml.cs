@@ -173,6 +173,7 @@ public partial class OverlayWindow : Window
             BackgroundBorder.Resources[key] = new SolidColorBrush(isWhiteTheme ? light : dark);
         }
 
+        ClockSection.Visibility = settings.ShowClock ? Visibility.Visible : Visibility.Collapsed;
         CpuSection.Visibility = settings.ShowCpu ? Visibility.Visible : Visibility.Collapsed;
         MemorySection.Visibility = settings.ShowMemory ? Visibility.Visible : Visibility.Collapsed;
         GpuSection.Visibility = settings.ShowGpu ? Visibility.Visible : Visibility.Collapsed;
