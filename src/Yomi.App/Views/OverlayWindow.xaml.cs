@@ -15,6 +15,10 @@ public partial class OverlayWindow : Window
     private readonly DispatcherTimer _clockTimer;
     private static readonly JapaneseCalendar JapaneseEraCalendar = new();
     private static readonly CultureInfo JapaneseEraCulture = CreateJapaneseEraCulture();
+    private TimeSpan _workStartTime = new(9, 0, 0);
+    private TimeSpan _workEndTime = new(18, 0, 0);
+    private TimeSpan _lunchStartTime = new(12, 0, 0);
+    private TimeSpan _lunchEndTime = new(13, 0, 0);
 
     public OverlayWindow(SamplingService samplingService)
     {
@@ -26,8 +30,8 @@ public partial class OverlayWindow : Window
         {
             Interval = TimeSpan.FromSeconds(1),
         };
-        _clockTimer.Tick += (_, _) => UpdateClock();
-        UpdateClock();
+        _clockTimer.Tick += (_, _) => UpdateClockAndWorkHours();
+        UpdateClockAndWorkHours();
         _clockTimer.Start();
     }
 
@@ -38,13 +42,60 @@ public partial class OverlayWindow : Window
         return culture;
     }
 
-    private void UpdateClock()
+    private void UpdateClockAndWorkHours()
     {
         var now = DateTime.Now;
         var era = now.ToString("gg", JapaneseEraCulture);
         var eraYear = JapaneseEraCalendar.GetYear(now);
         ClockDateText.Text = $"{era} {eraYear} 年 ({now.Year} 年) {now.Month} 月 {now.Day} 日";
         ClockTimeText.Text = now.ToString("HH:mm:ss");
+
+        UpdateWorkHoursBar(now.TimeOfDay);
+    }
+
+    private void UpdateWorkHoursBar(TimeSpan timeOfDay)
+    {
+        var isNightShift = _workStartTime >= _workEndTime;
+
+        // 開始時刻を 0 起点に正規化し、日またぎ(夜勤)を直線区間として扱う。
+        // 日中勤務は正規化しても開始からの経過時間なので同じ式で計算できる。
+        var now = Normalize(timeOfDay, _workStartTime);
+        var workEnd = Normalize(_workEndTime, _workStartTime);
+        var lunchStart = Normalize(_lunchStartTime, _workStartTime);
+        var lunchEnd = Normalize(_lunchEndTime, _workStartTime);
+        var lunchLabel = isNightShift ? "休憩" : "昼休み";
+        var firstHalfLabel = isNightShift ? "勤務中" : "午前";
+        var secondHalfLabel = isNightShift ? "勤務中" : "午後";
+
+        var (progressPercent, fillBrushKey, statusText) = now switch
+        {
+            var t when t >= TimeSpan.Zero && t < lunchStart =>
+                (ProgressWithin(t, TimeSpan.Zero, lunchStart), "WorkHoursBrush", firstHalfLabel),
+            var t when t >= lunchStart && t < lunchEnd =>
+                (ProgressWithin(t, lunchStart, lunchEnd), "LunchBrush", lunchLabel),
+            var t when t >= lunchEnd && t < workEnd =>
+                (ProgressWithin(t, lunchEnd, workEnd), "WorkHoursBrush", secondHalfLabel),
+            _ => (0.0, null, "時間外"),
+        };
+
+        WorkHoursBar.ProgressPercent = progressPercent;
+        WorkHoursBar.FillBrush = fillBrushKey is null ? null : (Brush)BackgroundBorder.Resources[fillBrushKey];
+        WorkHoursStatusText.Text = statusText;
+    }
+
+    /// <summary>基準時刻からの経過時間に正規化する。基準より前の時刻は翌日分とみなし24時間加算する。</summary>
+    private static TimeSpan Normalize(TimeSpan value, TimeSpan basis)
+    {
+        var diff = value - basis;
+        return diff < TimeSpan.Zero ? diff + TimeSpan.FromHours(24) : diff;
+    }
+
+    private static double ProgressWithin(TimeSpan current, TimeSpan start, TimeSpan end)
+    {
+        var span = (end - start).TotalSeconds;
+        if (span <= 0) return 0;
+        var elapsed = (current - start).TotalSeconds;
+        return Math.Clamp(elapsed / span * 100.0, 0, 100);
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -146,6 +197,8 @@ public partial class OverlayWindow : Window
         ("NetworkUploadBrush", Color.FromRgb(0xFF, 0xA8, 0x3C), Color.FromRgb(0xC4, 0x6A, 0x00)),
         ("NetworkAddressBrush", Color.FromRgb(0xC9, 0xA8, 0xFF), Color.FromRgb(0x6B, 0x21, 0xA8)),
         ("SecondaryTextBrush", Color.FromRgb(0xCC, 0xCC, 0xCC), Color.FromRgb(0x55, 0x55, 0x55)),
+        ("WorkHoursBrush", Color.FromRgb(0x3B, 0x9E, 0xFF), Color.FromRgb(0x0B, 0x63, 0xC6)),
+        ("LunchBrush", Color.FromRgb(0xFF, 0xA8, 0x3C), Color.FromRgb(0xC4, 0x6A, 0x00)),
     ];
 
     public void ApplySettings(AppSettings settings)
@@ -174,12 +227,19 @@ public partial class OverlayWindow : Window
         }
 
         ClockSection.Visibility = settings.ShowClock ? Visibility.Visible : Visibility.Collapsed;
+        WorkHoursSection.Visibility = settings.ShowWorkHours ? Visibility.Visible : Visibility.Collapsed;
         CpuSection.Visibility = settings.ShowCpu ? Visibility.Visible : Visibility.Collapsed;
         MemorySection.Visibility = settings.ShowMemory ? Visibility.Visible : Visibility.Collapsed;
         GpuSection.Visibility = settings.ShowGpu ? Visibility.Visible : Visibility.Collapsed;
         VramSection.Visibility = settings.ShowVram ? Visibility.Visible : Visibility.Collapsed;
         DiskSection.Visibility = settings.ShowDisk ? Visibility.Visible : Visibility.Collapsed;
         NetworkSection.Visibility = settings.ShowNetwork ? Visibility.Visible : Visibility.Collapsed;
+
+        _workStartTime = settings.WorkStartTime;
+        _workEndTime = settings.WorkEndTime;
+        _lunchStartTime = settings.LunchStartTime;
+        _lunchEndTime = settings.LunchEndTime;
+        UpdateWorkHoursBar(DateTime.Now.TimeOfDay);
     }
 
     protected override void OnClosed(EventArgs e)

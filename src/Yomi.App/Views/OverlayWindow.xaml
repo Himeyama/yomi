@@ -22,6 +22,8 @@
             <SolidColorBrush x:Key="NetworkUploadBrush" Color="#FFA83C"/>
             <SolidColorBrush x:Key="NetworkAddressBrush" Color="#C9A8FF"/>
             <SolidColorBrush x:Key="SecondaryTextBrush" Color="#999999"/>
+            <SolidColorBrush x:Key="WorkHoursBrush" Color="#3B9EFF"/>
+            <SolidColorBrush x:Key="LunchBrush" Color="#FFA83C"/>
         </Border.Resources>
         <StackPanel>
             <StackPanel x:Name="ClockSection" Margin="0,0,0,10">
@@ -29,6 +31,12 @@
                            HorizontalAlignment="Stretch" TextAlignment="Center"/>
                 <TextBlock x:Name="ClockTimeText" Text="--:--:--" Foreground="White" FontSize="46" FontWeight="Bold"
                            FontFamily="Consolas" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+            </StackPanel>
+
+            <StackPanel x:Name="WorkHoursSection" Margin="0,0,0,10">
+                <local:WorkHoursProgressBar x:Name="WorkHoursBar" Height="10" Margin="0,0,0,2"/>
+                <TextBlock x:Name="WorkHoursStatusText" Text="--" Foreground="{DynamicResource SecondaryTextBrush}"
+                           FontSize="11" HorizontalAlignment="Stretch" TextAlignment="Right"/>
             </StackPanel>
 
             <StackPanel x:Name="CpuSection">

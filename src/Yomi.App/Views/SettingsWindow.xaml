@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="yomi 設定"
-        Width="320" Height="475"
+        Width="320" Height="620"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         ShowInTaskbar="True"
@@ -26,8 +26,36 @@
             <RadioButton x:Name="BackgroundWhiteRadio" Content="白" GroupName="BackgroundColor"/>
         </StackPanel>
 
+        <TextBlock Text="業務時間" FontWeight="Bold" Margin="0,0,0,4"/>
+        <Grid Margin="0,0,0,4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="開始" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <TextBox x:Name="WorkStartTimeBox" Grid.Column="1" Margin="0,0,8,0"/>
+            <TextBlock Grid.Column="2" Text="終了" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <TextBox x:Name="WorkEndTimeBox" Grid.Column="3"/>
+        </Grid>
+        <Grid Margin="0,0,0,4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="休憩開始" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <TextBox x:Name="LunchStartTimeBox" Grid.Column="1" Margin="0,0,8,0"/>
+            <TextBlock Grid.Column="2" Text="終了" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <TextBox x:Name="LunchEndTimeBox" Grid.Column="3"/>
+        </Grid>
+        <TextBlock Text="時刻は HH:mm 形式で入力(例: 09:00)" Foreground="Gray" FontSize="10" Margin="0,0,0,10"/>
+
         <TextBlock Text="表示項目" FontWeight="Bold" Margin="0,0,0,4"/>
         <CheckBox x:Name="ShowClockCheck" Content="日付・時計" Margin="0,0,0,4"/>
+        <CheckBox x:Name="ShowWorkHoursCheck" Content="業務時間バー" Margin="0,0,0,4"/>
         <CheckBox x:Name="ShowCpuCheck" Content="CPU" Margin="0,0,0,4"/>
         <CheckBox x:Name="ShowMemoryCheck" Content="メモリ" Margin="0,0,0,4"/>
         <CheckBox x:Name="ShowGpuCheck" Content="GPU" Margin="0,0,0,4"/>
