@@ -70,11 +70,11 @@ public partial class OverlayWindow : Window
         var (progressPercent, fillBrushKey, statusText) = now switch
         {
             var t when t >= TimeSpan.Zero && t < lunchStart =>
-                (ProgressWithin(t, TimeSpan.Zero, lunchStart), "WorkHoursBrush", firstHalfLabel),
+                (ProgressWithin(t, TimeSpan.Zero, workEnd), "WorkHoursBrush", firstHalfLabel),
             var t when t >= lunchStart && t < lunchEnd =>
-                (ProgressWithin(t, lunchStart, lunchEnd), "LunchBrush", lunchLabel),
+                (ProgressWithin(t, TimeSpan.Zero, workEnd), "LunchBrush", lunchLabel),
             var t when t >= lunchEnd && t < workEnd =>
-                (ProgressWithin(t, lunchEnd, workEnd), "WorkHoursBrush", secondHalfLabel),
+                (ProgressWithin(t, TimeSpan.Zero, workEnd), "WorkHoursBrush", secondHalfLabel),
             _ => (0.0, null, "時間外"),
         };
 

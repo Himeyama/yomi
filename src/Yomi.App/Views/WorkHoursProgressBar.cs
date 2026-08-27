@@ -18,7 +18,7 @@ public sealed class WorkHoursProgressBar : FrameworkElement
         nameof(FillBrush), typeof(Brush), typeof(WorkHoursProgressBar),
         new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
 
-    /// <summary>現在の区間内での経過割合(0-100)。時間外のときは0として扱う。</summary>
+    /// <summary>勤務時間全体に対する経過割合(0-100)。時間外のときは0として扱う。</summary>
     public double ProgressPercent
     {
         get => (double)GetValue(ProgressPercentProperty);
