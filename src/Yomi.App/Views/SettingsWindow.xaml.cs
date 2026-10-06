@@ -25,6 +25,8 @@ public partial class SettingsWindow : Window
         BackgroundWhiteRadio.IsChecked = _settings.BackgroundColor == OverlayBackgroundColor.White;
         ShowClockCheck.IsChecked = _settings.ShowClock;
         ShowWorkHoursCheck.IsChecked = _settings.ShowWorkHours;
+        ShowIncomeCheck.IsChecked = _settings.ShowIncome;
+        MonthlyBaseSalaryBox.Text = _settings.MonthlyBaseSalary.ToString("0.##", CultureInfo.InvariantCulture);
         WorkStartTimeBox.Text = FormatTime(_settings.WorkStartTime);
         WorkEndTimeBox.Text = FormatTime(_settings.WorkEndTime);
         LunchStartTimeBox.Text = FormatTime(_settings.LunchStartTime);
@@ -60,6 +62,15 @@ public partial class SettingsWindow : Window
 
     private void SaveButton_Click(object sender, RoutedEventArgs e)
     {
+        if (!decimal.TryParse(MonthlyBaseSalaryBox.Text.Trim(),
+                NumberStyles.AllowDecimalPoint | NumberStyles.AllowThousands,
+                CultureInfo.InvariantCulture, out var monthlyBaseSalary) || monthlyBaseSalary < 0)
+        {
+            System.Windows.MessageBox.Show(this, "基本給 (月)は0以上の金額を入力してください。", "yomi 設定",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
         if (!TryParseTime(WorkStartTimeBox.Text, out var workStart) ||
             !TryParseTime(WorkEndTimeBox.Text, out var workEnd) ||
             !TryParseTime(LunchStartTimeBox.Text, out var lunchStart) ||
@@ -90,6 +101,8 @@ public partial class SettingsWindow : Window
                 : OverlayBackgroundColor.Black,
             ShowClock = ShowClockCheck.IsChecked ?? true,
             ShowWorkHours = ShowWorkHoursCheck.IsChecked ?? true,
+            ShowIncome = ShowIncomeCheck.IsChecked ?? true,
+            MonthlyBaseSalary = monthlyBaseSalary,
             WorkStartTime = workStart,
             WorkEndTime = workEnd,
             LunchStartTime = lunchStart,

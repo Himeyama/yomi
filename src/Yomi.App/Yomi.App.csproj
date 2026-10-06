@@ -8,6 +8,7 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>yomi</AssemblyName>
+    <Version>0.10.0</Version>
     <RootNamespace>Yomi.App</RootNamespace>
     <Platforms>x64</Platforms>
     <ApplicationManifest>app.manifest</ApplicationManifest>

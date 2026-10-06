@@ -19,6 +19,7 @@ public partial class OverlayWindow : Window
     private TimeSpan _workEndTime = new(18, 0, 0);
     private TimeSpan _lunchStartTime = new(12, 0, 0);
     private TimeSpan _lunchEndTime = new(13, 0, 0);
+    private AppSettings _incomeSettings = new();
 
     public OverlayWindow(SamplingService samplingService)
     {
@@ -51,6 +52,8 @@ public partial class OverlayWindow : Window
         ClockTimeText.Text = now.ToString("HH:mm:ss");
 
         UpdateWorkHoursBar(now.TimeOfDay);
+        IncomeValueText.Text = IncomeCalculator.CalculateDailyIncome(_incomeSettings, now)
+            .ToString("N2", CultureInfo.GetCultureInfo("ja-JP")) + " 円";
     }
 
     private void UpdateWorkHoursBar(TimeSpan timeOfDay)
@@ -212,6 +215,7 @@ public partial class OverlayWindow : Window
         var labelColor = isWhiteTheme ? Brushes.Black : Brushes.White;
         ClockDateText.Foreground = labelColor;
         ClockTimeText.Foreground = labelColor;
+        IncomeLabelText.Foreground = labelColor;
         CpuLabelText.Foreground = labelColor;
         MemoryLabelText.Foreground = labelColor;
         GpuLabelText.Foreground = labelColor;
@@ -228,6 +232,7 @@ public partial class OverlayWindow : Window
 
         ClockSection.Visibility = settings.ShowClock ? Visibility.Visible : Visibility.Collapsed;
         WorkHoursSection.Visibility = settings.ShowWorkHours ? Visibility.Visible : Visibility.Collapsed;
+        IncomeSection.Visibility = settings.ShowIncome ? Visibility.Visible : Visibility.Collapsed;
         CpuSection.Visibility = settings.ShowCpu ? Visibility.Visible : Visibility.Collapsed;
         MemorySection.Visibility = settings.ShowMemory ? Visibility.Visible : Visibility.Collapsed;
         GpuSection.Visibility = settings.ShowGpu ? Visibility.Visible : Visibility.Collapsed;
@@ -239,7 +244,8 @@ public partial class OverlayWindow : Window
         _workEndTime = settings.WorkEndTime;
         _lunchStartTime = settings.LunchStartTime;
         _lunchEndTime = settings.LunchEndTime;
-        UpdateWorkHoursBar(DateTime.Now.TimeOfDay);
+        _incomeSettings = settings;
+        UpdateClockAndWorkHours();
     }
 
     protected override void OnClosed(EventArgs e)

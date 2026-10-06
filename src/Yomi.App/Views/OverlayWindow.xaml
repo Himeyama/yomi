@@ -39,6 +39,16 @@
                            FontSize="11" HorizontalAlignment="Stretch" TextAlignment="Right"/>
             </StackPanel>
 
+            <Grid x:Name="IncomeSection" Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="IncomeLabelText" Text="今日の収入" Foreground="White" FontSize="11" VerticalAlignment="Center"/>
+                <TextBlock x:Name="IncomeValueText" Grid.Column="1" Text="0.00 円"
+                           Foreground="{DynamicResource WorkHoursBrush}" FontSize="18"/>
+            </Grid>
+
             <StackPanel x:Name="CpuSection">
                 <Grid Margin="0,0,0,2">
                     <Grid.ColumnDefinitions>

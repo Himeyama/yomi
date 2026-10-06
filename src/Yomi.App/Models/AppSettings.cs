@@ -12,6 +12,8 @@ public sealed class AppSettings
     public OverlayBackgroundColor BackgroundColor { get; set; } = OverlayBackgroundColor.Black;
     public bool ShowClock { get; set; } = true;
     public bool ShowWorkHours { get; set; } = true;
+    public bool ShowIncome { get; set; } = true;
+    public decimal MonthlyBaseSalary { get; set; }
     public TimeSpan WorkStartTime { get; set; } = new(9, 0, 0);
     public TimeSpan WorkEndTime { get; set; } = new(18, 0, 0);
     public TimeSpan LunchStartTime { get; set; } = new(12, 0, 0);
