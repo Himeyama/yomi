@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using Yomi.App.Models;
+using Yomi.App.Services;
 
 namespace Yomi.App.Views;
 
@@ -38,6 +39,8 @@ public partial class SettingsWindow : Window
         ShowDiskCheck.IsChecked = _settings.ShowDisk;
         ShowNetworkCheck.IsChecked = _settings.ShowNetwork;
         StartWithWindowsCheck.IsChecked = _settings.StartWithWindows;
+        ShowCustomImageCheck.IsChecked = _settings.ShowCustomImage;
+        CustomImagePathBox.Text = _settings.CustomImagePath ?? "";
     }
 
     private void OpacitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -101,7 +104,7 @@ public partial class SettingsWindow : Window
                 : OverlayBackgroundColor.Black,
             ShowClock = ShowClockCheck.IsChecked ?? true,
             ShowWorkHours = ShowWorkHoursCheck.IsChecked ?? true,
-            ShowIncome = ShowIncomeCheck.IsChecked ?? true,
+            ShowIncome = ShowIncomeCheck.IsChecked ?? false,
             MonthlyBaseSalary = monthlyBaseSalary,
             WorkStartTime = workStart,
             WorkEndTime = workEnd,
@@ -114,6 +117,8 @@ public partial class SettingsWindow : Window
             ShowDisk = ShowDiskCheck.IsChecked ?? true,
             ShowNetwork = ShowNetworkCheck.IsChecked ?? true,
             StartWithWindows = StartWithWindowsCheck.IsChecked ?? true,
+            ShowCustomImage = ShowCustomImageCheck.IsChecked ?? false,
+            CustomImagePath = string.IsNullOrWhiteSpace(CustomImagePathBox.Text) ? null : CustomImagePathBox.Text,
         };
 
         SettingsSaved?.Invoke(updated);
@@ -121,4 +126,31 @@ public partial class SettingsWindow : Window
     }
 
     private void CancelButton_Click(object sender, RoutedEventArgs e) => Close();
+
+    private void SelectCustomImage_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "カスタム画像を選択",
+            Filter = "画像ファイル|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff|すべてのファイル|*.*",
+            CheckFileExists = true,
+            Multiselect = false,
+        };
+        if (dialog.ShowDialog(this) != true) return;
+
+        if (CustomImageLoader.Load(dialog.FileName) is null)
+        {
+            System.Windows.MessageBox.Show(this, "画像を読み込めません。PNGやJPEGなどの画像を選択してください。", "yomi 設定",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        CustomImagePathBox.Text = dialog.FileName;
+    }
+
+    private void ClearCustomImage_Click(object sender, RoutedEventArgs e)
+    {
+        CustomImagePathBox.Clear();
+        ShowCustomImageCheck.IsChecked = false;
+    }
 }

@@ -239,6 +239,8 @@ public partial class OverlayWindow : Window
         VramSection.Visibility = settings.ShowVram ? Visibility.Visible : Visibility.Collapsed;
         DiskSection.Visibility = settings.ShowDisk ? Visibility.Visible : Visibility.Collapsed;
         NetworkSection.Visibility = settings.ShowNetwork ? Visibility.Visible : Visibility.Collapsed;
+        CustomImage.Source = settings.ShowCustomImage ? CustomImageLoader.Load(settings.CustomImagePath) : null;
+        CustomImage.Visibility = CustomImage.Source is null ? Visibility.Collapsed : Visibility.Visible;
 
         _workStartTime = settings.WorkStartTime;
         _workEndTime = settings.WorkEndTime;

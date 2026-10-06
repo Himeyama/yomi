@@ -74,6 +74,16 @@
 
         <CheckBox x:Name="StartWithWindowsCheck" Content="Windows起動時に自動起動" Margin="0,0,0,16"/>
 
+        <TextBlock Text="カスタム画像" FontWeight="Bold" Margin="0,0,0,4"/>
+        <CheckBox x:Name="ShowCustomImageCheck" Content="カスタム画像を表示" Margin="0,0,0,4"/>
+        <TextBox x:Name="CustomImagePathBox" IsReadOnly="True" TextWrapping="Wrap" Margin="0,0,0,4"/>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+            <Button Content="画像を選択…" Padding="8,2" Click="SelectCustomImage_Click" Margin="0,0,8,0"/>
+            <Button Content="解除" Padding="8,2" Click="ClearCustomImage_Click"/>
+        </StackPanel>
+        <TextBlock Text="一番下に横幅に合わせて表示します。&#10;選択した画像ファイルは元の場所に保管してください。"
+                   Foreground="Gray" FontSize="10" Margin="0,0,0,16"/>
+
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
             <Button x:Name="CancelButton" Content="キャンセル" Width="80" Margin="0,0,8,0" Click="CancelButton_Click"/>
             <Button x:Name="SaveButton" Content="保存" Width="80" Click="SaveButton_Click"/>

@@ -12,7 +12,7 @@ public sealed class AppSettings
     public OverlayBackgroundColor BackgroundColor { get; set; } = OverlayBackgroundColor.Black;
     public bool ShowClock { get; set; } = true;
     public bool ShowWorkHours { get; set; } = true;
-    public bool ShowIncome { get; set; } = true;
+    public bool ShowIncome { get; set; } = false;
     public decimal MonthlyBaseSalary { get; set; }
     public TimeSpan WorkStartTime { get; set; } = new(9, 0, 0);
     public TimeSpan WorkEndTime { get; set; } = new(18, 0, 0);
@@ -24,5 +24,7 @@ public sealed class AppSettings
     public bool ShowVram { get; set; } = true;
     public bool ShowDisk { get; set; } = true;
     public bool ShowNetwork { get; set; } = true;
+    public bool ShowCustomImage { get; set; } = false;
+    public string? CustomImagePath { get; set; }
     public bool StartWithWindows { get; set; } = true;
 }
