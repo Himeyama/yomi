@@ -52,6 +52,11 @@ public partial class OverlayWindow : Window
         ClockTimeText.Text = now.ToString("HH:mm:ss");
 
         UpdateWorkHoursBar(now.TimeOfDay);
+        var isWithinWorkHours = Normalize(now.TimeOfDay, _workStartTime)
+            < Normalize(_workEndTime, _workStartTime);
+        IncomeSection.Visibility = _incomeSettings.ShowIncome && isWithinWorkHours
+            ? Visibility.Visible
+            : Visibility.Collapsed;
         IncomeValueText.Text = IncomeCalculator.CalculateDailyIncome(_incomeSettings, now)
             .ToString("N2", CultureInfo.GetCultureInfo("ja-JP")) + " 円";
     }
@@ -232,7 +237,6 @@ public partial class OverlayWindow : Window
 
         ClockSection.Visibility = settings.ShowClock ? Visibility.Visible : Visibility.Collapsed;
         WorkHoursSection.Visibility = settings.ShowWorkHours ? Visibility.Visible : Visibility.Collapsed;
-        IncomeSection.Visibility = settings.ShowIncome ? Visibility.Visible : Visibility.Collapsed;
         CpuSection.Visibility = settings.ShowCpu ? Visibility.Visible : Visibility.Collapsed;
         MemorySection.Visibility = settings.ShowMemory ? Visibility.Visible : Visibility.Collapsed;
         GpuSection.Visibility = settings.ShowGpu ? Visibility.Visible : Visibility.Collapsed;
