@@ -1,5 +1,7 @@
 using System.Globalization;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Threading;
 using Yomi.App.Models;
 using Yomi.App.Services;
 
@@ -8,6 +10,8 @@ namespace Yomi.App.Views;
 public partial class SettingsWindow : Window
 {
     private readonly AppSettings _settings;
+    private bool _controlsLoaded;
+    private bool _validationRequested;
 
     public event Action<AppSettings>? SettingsSaved;
 
@@ -16,19 +20,26 @@ public partial class SettingsWindow : Window
         InitializeComponent();
         _settings = settings;
         LoadIntoControls();
+        _controlsLoaded = true;
+        UpdateWorkDuration();
+        UpdateImagePreview();
     }
 
     private void LoadIntoControls()
     {
-        OpacitySlider.Value = _settings.Opacity;
-        OpacityValueText.Text = FormatOpacity(_settings.Opacity);
-        BackgroundBlackRadio.IsChecked = _settings.BackgroundColor == OverlayBackgroundColor.Black;
-        BackgroundWhiteRadio.IsChecked = _settings.BackgroundColor == OverlayBackgroundColor.White;
+        // 5%刻みで選べるようにし、既存の任意の透明度も保存し直すまで保持する。
+        var opacityValues = Enumerable.Range(0, 21).Select(index => index / 20d)
+            .Append(_settings.Opacity).Distinct().OrderBy(value => value);
+        foreach (var value in opacityValues)
+            OpacityCombo.Items.Add(new ComboBoxItem { Content = FormatOpacity(value), Tag = value });
+        OpacityCombo.SelectedValuePath = "Tag";
+        OpacityCombo.SelectedValue = _settings.Opacity;
+        BackgroundColorCombo.SelectedValue = _settings.BackgroundColor.ToString();
         EModeCheck.IsChecked = _settings.EMode;
         ShowClockCheck.IsChecked = _settings.ShowClock;
         ShowWorkHoursCheck.IsChecked = _settings.ShowWorkHours;
         ShowIncomeCheck.IsChecked = _settings.ShowIncome;
-        MonthlyBaseSalaryBox.Text = _settings.MonthlyBaseSalary.ToString("0.##", CultureInfo.InvariantCulture);
+        MonthlyBaseSalaryBox.Text = _settings.MonthlyBaseSalary.ToString("#,0.##", CultureInfo.InvariantCulture);
         WorkStartTimeBox.Text = FormatTime(_settings.WorkStartTime);
         WorkEndTimeBox.Text = FormatTime(_settings.WorkEndTime);
         LunchStartTimeBox.Text = FormatTime(_settings.LunchStartTime);
@@ -44,72 +55,130 @@ public partial class SettingsWindow : Window
         CustomImagePathBox.Text = _settings.CustomImagePath ?? "";
     }
 
-    private void OpacitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (OpacityValueText is null) return;
-        OpacityValueText.Text = FormatOpacity(e.NewValue);
-    }
-
     private void EModeCheck_Changed(object sender, RoutedEventArgs e)
     {
-        if (OpacitySlider is null || BackgroundColorPanel is null) return;
+        if (OpacityCombo is null || BackgroundColorCombo is null) return;
         var isStandardTheme = EModeCheck.IsChecked != true;
-        OpacitySlider.IsEnabled = isStandardTheme;
-        BackgroundColorPanel.IsEnabled = isStandardTheme;
+        OpacityCombo.IsEnabled = isStandardTheme;
+        BackgroundColorCombo.IsEnabled = isStandardTheme;
     }
+
+    private void MinimizeButton_Click(object sender, RoutedEventArgs e) => SystemCommands.MinimizeWindow(this);
+
+    private void MaximizeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (WindowState == WindowState.Maximized)
+            SystemCommands.RestoreWindow(this);
+        else
+            SystemCommands.MaximizeWindow(this);
+    }
+
+    private void CloseButton_Click(object sender, RoutedEventArgs e) => SystemCommands.CloseWindow(this);
 
     private static string FormatOpacity(double value) => $"{Math.Round(value * 100)}%";
 
     private static string FormatTime(TimeSpan time) => $"{(int)time.TotalHours:D2}:{time.Minutes:D2}";
 
-    private static bool TryParseTime(string text, out TimeSpan time) =>
-        TimeSpan.TryParseExact(text.Trim(), "hh\\:mm", CultureInfo.InvariantCulture, out time);
-
-    /// <summary>基準時刻からの経過時間に正規化する。基準より前の時刻は翌日分とみなし24時間加算する。</summary>
-    private static TimeSpan Normalize(TimeSpan value, TimeSpan basis)
+    private void Input_Changed(object sender, TextChangedEventArgs e)
     {
-        var diff = value - basis;
-        return diff < TimeSpan.Zero ? diff + TimeSpan.FromHours(24) : diff;
+        if (!_controlsLoaded) return;
+        UpdateWorkDuration();
+        if (_validationRequested) ValidateInputs(false);
+    }
+
+    private void TimeBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        var box = (System.Windows.Controls.TextBox)sender;
+        if (SettingsInput.TryParseTime(box.Text, out var time)) box.Text = FormatTime(time);
+    }
+
+    private void SalaryBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (SettingsInput.TryParseSalary(MonthlyBaseSalaryBox.Text, out var salary))
+            MonthlyBaseSalaryBox.Text = salary.ToString("#,0.##", CultureInfo.InvariantCulture);
+    }
+
+    private void UpdateWorkDuration()
+    {
+        if (SettingsInput.TryParseTime(WorkStartTimeBox.Text, out var start) &&
+            SettingsInput.TryParseTime(WorkEndTimeBox.Text, out var end) &&
+            SettingsInput.TryParseTime(LunchStartTimeBox.Text, out var lunchStart) &&
+            SettingsInput.TryParseTime(LunchEndTimeBox.Text, out var lunchEnd) &&
+            SettingsInput.TryGetWorkDuration(start, end, lunchStart, lunchEnd, out var duration))
+        {
+            var overnight = end < start ? "（翌日まで）" : "";
+            WorkDurationText.Text = $"実働 {(int)duration.TotalHours}時間{duration.Minutes:00}分{overnight} / 日";
+        }
+        else WorkDurationText.Text = "勤務・休憩の時刻を入力すると、実働時間を確認できます。";
+    }
+
+    private bool ValidateInputs(bool focusError)
+    {
+        System.Windows.Controls.Control? firstInvalid = null;
+        string? message = null;
+        void MarkInvalid(System.Windows.Controls.Control control, string error)
+        {
+            control.Tag = "Invalid";
+            firstInvalid ??= control;
+            message ??= error;
+        }
+
+        var fields = new[] { WorkStartTimeBox, WorkEndTimeBox, LunchStartTimeBox, LunchEndTimeBox };
+        var names = new[] { "勤務開始", "勤務終了", "休憩開始", "休憩終了" };
+        var times = new TimeSpan[4];
+        var validTimes = true;
+        for (var i = 0; i < fields.Length; i++)
+        {
+            fields[i].Tag = null;
+            if (SettingsInput.TryParseTime(fields[i].Text, out times[i])) continue;
+            validTimes = false;
+            MarkInvalid(fields[i], $"{names[i]}を 9:00 または 0900 の形式で入力してください（0:00〜23:59）。");
+        }
+        if (validTimes && !SettingsInput.TryGetWorkDuration(times[0], times[1], times[2], times[3], out _))
+        {
+            foreach (var field in fields) field.Tag = "Invalid";
+            MarkInvalid(WorkStartTimeBox, "休憩は勤務時間内に設定し、休憩を除く勤務時間を確保してください。");
+        }
+        MonthlyBaseSalaryBox.Tag = null;
+        if (!SettingsInput.TryParseSalary(MonthlyBaseSalaryBox.Text, out _))
+            MarkInvalid(MonthlyBaseSalaryBox, "基本給（月）には0以上の金額を入力してください（例：300,000）。");
+
+        CustomImagePathBox.Tag = null;
+        if (ShowCustomImageCheck.IsChecked == true && CustomImageLoader.Load(CustomImagePathBox.Text) is null)
+            MarkInvalid(CustomImagePathBox, "表示する画像を選択してください。読み込めない場合は、画像を選び直してください。");
+
+        ValidationText.Text = message ?? "";
+        ValidationBanner.Visibility = message is null ? Visibility.Collapsed : Visibility.Visible;
+        if (focusError && firstInvalid is not null)
+        {
+            SettingsTabs.SelectedItem = firstInvalid == CustomImagePathBox ? ImageTab : WorkTab;
+            // タブを切り替えた後、レイアウト完了時に対象項目へ移動する。
+            var target = firstInvalid;
+            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+            {
+                target.BringIntoView();
+                target.Focus();
+                if (target is System.Windows.Controls.TextBox box) box.SelectAll();
+            }));
+        }
+        return message is null;
     }
 
     private void SaveButton_Click(object sender, RoutedEventArgs e)
     {
-        if (!decimal.TryParse(MonthlyBaseSalaryBox.Text.Trim(),
-                NumberStyles.AllowDecimalPoint | NumberStyles.AllowThousands,
-                CultureInfo.InvariantCulture, out var monthlyBaseSalary) || monthlyBaseSalary < 0)
-        {
-            System.Windows.MessageBox.Show(this, "基本給 (月)は0以上の金額を入力してください。", "yomi 設定",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
-
-        if (!TryParseTime(WorkStartTimeBox.Text, out var workStart) ||
-            !TryParseTime(WorkEndTimeBox.Text, out var workEnd) ||
-            !TryParseTime(LunchStartTimeBox.Text, out var lunchStart) ||
-            !TryParseTime(LunchEndTimeBox.Text, out var lunchEnd))
-        {
-            System.Windows.MessageBox.Show(this, "業務時間は HH:mm 形式で入力してください(例: 09:00)。", "yomi 設定",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
-
-        // 開始 >= 終了は夜勤(例: 22:00-5:00、当日開始・翌日終了)として扱う。
-        // 開始時刻を 0 起点に正規化した上で、休憩が勤務時間内に収まっているか判定する。
-        var normalizedWorkEnd = Normalize(workEnd, workStart);
-        var normalizedLunchStart = Normalize(lunchStart, workStart);
-        var normalizedLunchEnd = Normalize(lunchEnd, workStart);
-        if (normalizedLunchStart >= normalizedLunchEnd || normalizedLunchEnd > normalizedWorkEnd)
-        {
-            System.Windows.MessageBox.Show(this, "業務時間・休憩の前後関係が不正です。", "yomi 設定",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
+        _validationRequested = true;
+        if (!ValidateInputs(true)) return;
+        SettingsInput.TryParseSalary(MonthlyBaseSalaryBox.Text, out var monthlyBaseSalary);
+        SettingsInput.TryParseTime(WorkStartTimeBox.Text, out var workStart);
+        SettingsInput.TryParseTime(WorkEndTimeBox.Text, out var workEnd);
+        SettingsInput.TryParseTime(LunchStartTimeBox.Text, out var lunchStart);
+        SettingsInput.TryParseTime(LunchEndTimeBox.Text, out var lunchEnd);
 
         var updated = new AppSettings
         {
             EMode = EModeCheck.IsChecked == true,
-            Opacity = OpacitySlider.Value,
-            BackgroundColor = BackgroundWhiteRadio.IsChecked == true
+            Opacity = OpacityCombo.SelectedValue is double opacity ? opacity : _settings.Opacity,
+            BackgroundColor = BackgroundColorCombo.SelectedValue as string == "White"
                 ? OverlayBackgroundColor.White
                 : OverlayBackgroundColor.Black,
             ShowClock = ShowClockCheck.IsChecked ?? true,
@@ -150,17 +219,37 @@ public partial class SettingsWindow : Window
 
         if (CustomImageLoader.Load(dialog.FileName) is null)
         {
-            System.Windows.MessageBox.Show(this, "画像を読み込めません。PNGやJPEGなどの画像を選択してください。", "yomi 設定",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            ImageErrorText.Text = "画像を読み込めません。PNGやJPEGなどの画像を選択してください。";
+            ImageErrorText.Visibility = Visibility.Visible;
             return;
         }
 
         CustomImagePathBox.Text = dialog.FileName;
+        ShowCustomImageCheck.IsChecked = true;
+        UpdateImagePreview();
+        if (_validationRequested) ValidateInputs(false);
     }
 
     private void ClearCustomImage_Click(object sender, RoutedEventArgs e)
     {
         CustomImagePathBox.Clear();
         ShowCustomImageCheck.IsChecked = false;
+        UpdateImagePreview();
+        if (_validationRequested) ValidateInputs(false);
+    }
+
+    private void ImageSetting_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_controlsLoaded && _validationRequested) ValidateInputs(false);
+    }
+
+    private void UpdateImagePreview()
+    {
+        CustomImagePreview.Source = CustomImageLoader.Load(CustomImagePathBox.Text);
+        ImagePlaceholder.Visibility = CustomImagePreview.Source is null ? Visibility.Visible : Visibility.Collapsed;
+        ImagePlaceholder.Text = string.IsNullOrWhiteSpace(CustomImagePathBox.Text)
+            ? "ロゴやお気に入りの画像を選択" : "画像が見つからないか、読み込めません";
+        ClearImageButton.IsEnabled = !string.IsNullOrWhiteSpace(CustomImagePathBox.Text);
+        ImageErrorText.Visibility = Visibility.Collapsed;
     }
 }

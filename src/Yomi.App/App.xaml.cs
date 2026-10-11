@@ -48,6 +48,9 @@ public partial class App : Application
         _trayIcon.ToggleVisibilityRequested += OnToggleVisibilityRequested;
         _trayIcon.SettingsRequested += OnSettingsRequested;
         _trayIcon.ExitRequested += OnExitRequested;
+
+        if (e.Args.Contains("--settings"))
+            OnSettingsRequested();
     }
 
     private void RegisterAutoStartTask()
