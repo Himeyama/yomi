@@ -24,6 +24,7 @@ public partial class SettingsWindow : Window
         OpacityValueText.Text = FormatOpacity(_settings.Opacity);
         BackgroundBlackRadio.IsChecked = _settings.BackgroundColor == OverlayBackgroundColor.Black;
         BackgroundWhiteRadio.IsChecked = _settings.BackgroundColor == OverlayBackgroundColor.White;
+        EModeCheck.IsChecked = _settings.EMode;
         ShowClockCheck.IsChecked = _settings.ShowClock;
         ShowWorkHoursCheck.IsChecked = _settings.ShowWorkHours;
         ShowIncomeCheck.IsChecked = _settings.ShowIncome;
@@ -47,6 +48,14 @@ public partial class SettingsWindow : Window
     {
         if (OpacityValueText is null) return;
         OpacityValueText.Text = FormatOpacity(e.NewValue);
+    }
+
+    private void EModeCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        if (OpacitySlider is null || BackgroundColorPanel is null) return;
+        var isStandardTheme = EModeCheck.IsChecked != true;
+        OpacitySlider.IsEnabled = isStandardTheme;
+        BackgroundColorPanel.IsEnabled = isStandardTheme;
     }
 
     private static string FormatOpacity(double value) => $"{Math.Round(value * 100)}%";
@@ -98,6 +107,7 @@ public partial class SettingsWindow : Window
 
         var updated = new AppSettings
         {
+            EMode = EModeCheck.IsChecked == true,
             Opacity = OpacitySlider.Value,
             BackgroundColor = BackgroundWhiteRadio.IsChecked == true
                 ? OverlayBackgroundColor.White

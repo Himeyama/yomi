@@ -10,7 +10,7 @@
         ShowInTaskbar="False"
         ResizeMode="NoResize"
         Topmost="False">
-    <Border x:Name="BackgroundBorder" Background="#FF101010" CornerRadius="6" Padding="12">
+    <Border x:Name="BackgroundBorder" Background="#FF101010" CornerRadius="6" Padding="12" SnapsToDevicePixels="True">
         <Border.Resources>
             <SolidColorBrush x:Key="CpuBrush" Color="#29ABD4"/>
             <SolidColorBrush x:Key="MemoryBrush" Color="#4D8FFF"/>
@@ -31,11 +31,12 @@
                            HorizontalAlignment="Stretch" TextAlignment="Center"/>
                 <TextBlock x:Name="ClockTimeText" Text="--:--:--" Foreground="White" FontSize="46" FontWeight="Bold"
                            FontFamily="Consolas" HorizontalAlignment="Stretch" TextAlignment="Center"/>
+                <local:SevenSegmentClock x:Name="SegmentClock" Visibility="Collapsed" Margin="0,6,0,6"/>
             </StackPanel>
 
             <StackPanel x:Name="WorkHoursSection" Margin="0,0,0,10">
                 <local:WorkHoursProgressBar x:Name="WorkHoursBar" Height="10" Margin="0,0,0,2"/>
-                <TextBlock x:Name="WorkHoursStatusText" Text="--" Foreground="{DynamicResource SecondaryTextBrush}"
+                <TextBlock x:Name="WorkHoursStatusText" Text="--" Foreground="{DynamicResource SecondaryTextBrushText}"
                            FontSize="11" HorizontalAlignment="Stretch" TextAlignment="Right"/>
             </StackPanel>
 
@@ -46,7 +47,7 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock x:Name="IncomeLabelText" Text="今日の収入" Foreground="White" FontSize="11" VerticalAlignment="Center"/>
                 <TextBlock x:Name="IncomeValueText" Grid.Column="1" Text="0.00 円"
-                           Foreground="{DynamicResource WorkHoursBrush}" FontSize="18"/>
+                           Foreground="{DynamicResource WorkHoursBrushText}" FontSize="18"/>
             </Grid>
 
             <StackPanel x:Name="CpuSection">
@@ -56,9 +57,9 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="CpuLabelText" Grid.Column="0" Text="CPU" Foreground="White" FontSize="11"/>
-                    <TextBlock x:Name="CpuValueText" Grid.Column="1" Text="--%" Foreground="{DynamicResource CpuBrush}" FontSize="14"/>
+                    <TextBlock x:Name="CpuValueText" Grid.Column="1" Text="--%" Foreground="{DynamicResource CpuBrushText}" FontSize="14"/>
                 </Grid>
-                <TextBlock x:Name="CpuNameText" Text="--" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="9" Margin="0,0,0,4" TextWrapping="Wrap"/>
+                <TextBlock x:Name="CpuNameText" Text="--" Foreground="{DynamicResource CpuNameTextBrush}" FontSize="9" Margin="0,0,0,4" TextWrapping="Wrap"/>
                 <local:GraphControl x:Name="CpuGraph" Height="90" LineBrush="{DynamicResource CpuBrush}" Margin="0,0,0,10"/>
             </StackPanel>
 
@@ -69,7 +70,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="MemoryLabelText" Grid.Column="0" Text="メモリ" Foreground="White" FontSize="11"/>
-                    <TextBlock x:Name="MemoryValueText" Grid.Column="1" Text="--" Foreground="{DynamicResource MemoryBrush}" FontSize="14"/>
+                    <TextBlock x:Name="MemoryValueText" Grid.Column="1" Text="--" Foreground="{DynamicResource MemoryBrushText}" FontSize="14"/>
                 </Grid>
                 <local:GraphControl x:Name="MemoryGraph" Height="90" LineBrush="{DynamicResource MemoryBrush}" Margin="0,0,0,10"/>
             </StackPanel>
@@ -81,9 +82,9 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="GpuLabelText" Grid.Column="0" Text="GPU" Foreground="White" FontSize="11"/>
-                    <TextBlock x:Name="GpuValueText" Grid.Column="1" Text="--%" Foreground="{DynamicResource GpuBrush}" FontSize="14"/>
+                    <TextBlock x:Name="GpuValueText" Grid.Column="1" Text="--%" Foreground="{DynamicResource GpuBrushText}" FontSize="14"/>
                 </Grid>
-                <TextBlock x:Name="GpuNameText" Text="--" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="9" Margin="0,0,0,4" TextWrapping="Wrap"/>
+                <TextBlock x:Name="GpuNameText" Text="--" Foreground="{DynamicResource GpuNameTextBrush}" FontSize="9" Margin="0,0,0,4" TextWrapping="Wrap"/>
                 <local:GraphControl x:Name="GpuGraph" Height="90" LineBrush="{DynamicResource GpuBrush}" Margin="0,0,0,10"/>
             </StackPanel>
 
@@ -94,7 +95,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="VramLabelText" Grid.Column="0" Text="VRAM" Foreground="White" FontSize="11"/>
-                    <TextBlock x:Name="VramValueText" Grid.Column="1" Text="--" Foreground="{DynamicResource VramBrush}" FontSize="14"/>
+                    <TextBlock x:Name="VramValueText" Grid.Column="1" Text="--" Foreground="{DynamicResource VramBrushText}" FontSize="14"/>
                 </Grid>
                 <local:GraphControl x:Name="VramGraph" Height="90" LineBrush="{DynamicResource VramBrush}" Margin="0,0,0,10"/>
             </StackPanel>
@@ -110,11 +111,34 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{Binding Name}" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="10"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding UsageText}" Foreground="{DynamicResource DiskBrush}" FontSize="10"/>
+                                    <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="10">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{DynamicResource DiskNameTextBrush}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsLowSpace}" Value="True">
+                                                        <Setter Property="Foreground" Value="{DynamicResource DiskWarningNameTextBrush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Grid.Column="1" Text="{Binding UsageText}" FontSize="10">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{DynamicResource DiskBrushText}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsLowSpace}" Value="True">
+                                                        <Setter Property="Foreground" Value="{DynamicResource DiskWarningValueTextBrush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
                                 </Grid>
                                 <local:DiskUsageBar Height="8" UsagePercent="{Binding UsagePercent}"
-                                                     NormalBrush="{DynamicResource DiskBrush}"
+                                                     TrackBrush="{DynamicResource VolumeTrackBrush}"
+                                                     IsRounded="{DynamicResource RoundedBars}" NormalBrush="{DynamicResource DiskBrush}"
                                                      WarningBrush="{DynamicResource DiskWarningBrush}"/>
                             </StackPanel>
                         </DataTemplate>
@@ -130,10 +154,10 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="NetworkSpeedLabelText" Grid.Column="0" Text="ネットワーク" Foreground="White" FontSize="11"/>
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <TextBlock Text="&#8593;" Foreground="{DynamicResource NetworkUploadBrush}" FontSize="11" Margin="0,0,2,0"/>
-                        <TextBlock x:Name="UploadSpeedText" Text="--" Foreground="{DynamicResource NetworkUploadBrush}" FontSize="12" Margin="0,0,8,0"/>
-                        <TextBlock Text="&#8595;" Foreground="{DynamicResource NetworkDownloadBrush}" FontSize="11" Margin="0,0,2,0"/>
-                        <TextBlock x:Name="DownloadSpeedText" Text="--" Foreground="{DynamicResource NetworkDownloadBrush}" FontSize="12"/>
+                        <TextBlock Text="&#8593;" Foreground="{DynamicResource NetworkUploadBrushText}" FontSize="11" Margin="0,0,2,0"/>
+                        <TextBlock x:Name="UploadSpeedText" Text="--" Foreground="{DynamicResource NetworkUploadBrushText}" FontSize="12" Margin="0,0,8,0"/>
+                        <TextBlock Text="&#8595;" Foreground="{DynamicResource NetworkDownloadBrushText}" FontSize="11" Margin="0,0,2,0"/>
+                        <TextBlock x:Name="DownloadSpeedText" Text="--" Foreground="{DynamicResource NetworkDownloadBrushText}" FontSize="12"/>
                     </StackPanel>
                 </Grid>
                 <local:DualSeriesGraphControl x:Name="NetworkGraph" Height="60"
@@ -147,7 +171,7 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="NetworkIpLabelText" Grid.Column="0" Text="IPアドレス" Foreground="White" FontSize="11"/>
                 </Grid>
-                <TextBlock x:Name="IpAddressText" Text="--" Foreground="{DynamicResource NetworkAddressBrush}" FontSize="13" Margin="0,0,0,6" TextWrapping="Wrap"/>
+                <TextBlock x:Name="IpAddressText" Text="--" Foreground="{DynamicResource NetworkAddressBrushText}" FontSize="13" Margin="0,0,0,6" TextWrapping="Wrap"/>
 
                 <Grid Margin="0,0,0,2">
                     <Grid.ColumnDefinitions>
@@ -155,7 +179,7 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="NetworkDnsLabelText" Grid.Column="0" Text="DNS" Foreground="White" FontSize="11"/>
                 </Grid>
-                <TextBlock x:Name="DnsText" Text="--" Foreground="{DynamicResource NetworkAddressBrush}" FontSize="13" TextWrapping="Wrap"/>
+                <TextBlock x:Name="DnsText" Text="--" Foreground="{DynamicResource NetworkAddressBrushText}" FontSize="13" TextWrapping="Wrap"/>
             </StackPanel>
             <Image x:Name="CustomImage" Visibility="Collapsed" Margin="0,10,0,0"
                    Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=StackPanel}}"

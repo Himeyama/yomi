@@ -8,7 +8,7 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>yomi</AssemblyName>
-    <Version>0.12.0</Version>
+    <Version>0.13.0</Version>
     <RootNamespace>Yomi.App</RootNamespace>
     <Platforms>x64</Platforms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -23,6 +23,10 @@
     <RetainVMGarbageCollection>false</RetainVMGarbageCollection>
     <TieredCompilation>true</TieredCompilation>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\digital-clock.svg" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="8.0.1" />

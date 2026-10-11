@@ -46,10 +46,18 @@ public partial class OverlayWindow : Window
     private void UpdateClockAndWorkHours()
     {
         var now = DateTime.Now;
-        var era = now.ToString("gg", JapaneseEraCulture);
-        var eraYear = JapaneseEraCalendar.GetYear(now);
-        ClockDateText.Text = $"{era} {eraYear} 年 ({now.Year} 年) {now.Month} 月 {now.Day} 日";
+        if (_incomeSettings.EMode)
+        {
+            ClockDateText.Text = now.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+        }
+        else
+        {
+            var era = now.ToString("gg", JapaneseEraCulture);
+            var eraYear = JapaneseEraCalendar.GetYear(now);
+            ClockDateText.Text = $"{era} {eraYear} 年 ({now.Year} 年) {now.Month} 月 {now.Day} 日";
+        }
         ClockTimeText.Text = now.ToString("HH:mm:ss");
+        SegmentClock.Time = now;
 
         UpdateWorkHoursBar(now.TimeOfDay);
         var isWithinWorkHours = Normalize(now.TimeOfDay, _workStartTime)
@@ -58,7 +66,7 @@ public partial class OverlayWindow : Window
             ? Visibility.Visible
             : Visibility.Collapsed;
         IncomeValueText.Text = IncomeCalculator.CalculateDailyIncome(_incomeSettings, now)
-            .ToString("N2", CultureInfo.GetCultureInfo("ja-JP")) + " 円";
+            .ToString("N2", CultureInfo.GetCultureInfo("ja-JP")) + (_incomeSettings.EMode ? " JPY" : " 円");
     }
 
     private void UpdateWorkHoursBar(TimeSpan timeOfDay)
@@ -71,9 +79,12 @@ public partial class OverlayWindow : Window
         var workEnd = Normalize(_workEndTime, _workStartTime);
         var lunchStart = Normalize(_lunchStartTime, _workStartTime);
         var lunchEnd = Normalize(_lunchEndTime, _workStartTime);
-        var lunchLabel = isNightShift ? "休憩" : "昼休み";
-        var firstHalfLabel = isNightShift ? "勤務中" : "午前";
-        var secondHalfLabel = isNightShift ? "勤務中" : "午後";
+        var lunchLabel = _incomeSettings.EMode
+            ? (isNightShift ? "BREAK" : "LUNCH") : (isNightShift ? "休憩" : "昼休み");
+        var firstHalfLabel = _incomeSettings.EMode
+            ? (isNightShift ? "WORKING" : "AM") : (isNightShift ? "勤務中" : "午前");
+        var secondHalfLabel = _incomeSettings.EMode
+            ? (isNightShift ? "WORKING" : "PM") : (isNightShift ? "勤務中" : "午後");
 
         var (progressPercent, fillBrushKey, statusText) = now switch
         {
@@ -83,7 +94,7 @@ public partial class OverlayWindow : Window
                 (ProgressWithin(t, TimeSpan.Zero, workEnd), "LunchBrush", lunchLabel),
             var t when t >= lunchEnd && t < workEnd =>
                 (ProgressWithin(t, TimeSpan.Zero, workEnd), "WorkHoursBrush", secondHalfLabel),
-            _ => (0.0, null, "時間外"),
+            _ => (0.0, null, _incomeSettings.EMode ? "OFF HOURS" : "時間外"),
         };
 
         WorkHoursBar.ProgressPercent = progressPercent;
@@ -211,15 +222,41 @@ public partial class OverlayWindow : Window
 
     public void ApplySettings(AppSettings settings)
     {
+        var isEMode = settings.EMode;
         var isWhiteTheme = settings.BackgroundColor == OverlayBackgroundColor.White;
+        if (isEMode)
+            FontWeight = FontWeights.Bold;
+        else
+            ClearValue(System.Windows.Controls.Control.FontWeightProperty);
 
-        var baseColor = isWhiteTheme ? Colors.White : Colors.Black;
-        var alpha = (byte)Math.Round(Math.Clamp(settings.Opacity, 0.0, 1.0) * 255);
+        var baseColor = !isEMode && isWhiteTheme ? Colors.White : Colors.Black;
+        var alpha = isEMode ? (byte)255 : (byte)Math.Round(Math.Clamp(settings.Opacity, 0.0, 1.0) * 255);
         BackgroundBorder.Background = new SolidColorBrush(Color.FromArgb(alpha, baseColor.R, baseColor.G, baseColor.B));
+        BackgroundBorder.CornerRadius = new CornerRadius(isEMode ? 0 : 6);
+        WorkHoursBar.IsRounded = !isEMode;
+        if (isEMode)
+            WorkHoursBar.TrackBrush = Brushes.Transparent;
+        else
+            WorkHoursBar.ClearValue(WorkHoursProgressBar.TrackBrushProperty);
+        BackgroundBorder.Resources["RoundedBars"] = !isEMode;
 
-        var labelColor = isWhiteTheme ? Brushes.Black : Brushes.White;
+        var eTextBrush = new SolidColorBrush(Color.FromRgb(0xFF, 0xD0, 0x44));
+        eTextBrush.Freeze();
+        BackgroundBorder.BorderBrush = isEMode ? eTextBrush : null;
+        BackgroundBorder.BorderThickness = new Thickness(isEMode ? 2 : 0);
+
+        IncomeLabelText.Text = isEMode ? "TODAY'S INCOME" : "今日の収入";
+        MemoryLabelText.Text = isEMode ? "MEMORY" : "メモリ";
+        DiskLabelText.Text = isEMode ? "VOLUME" : "ディスク";
+        NetworkSpeedLabelText.Text = isEMode ? "NETWORK" : "ネットワーク";
+        NetworkIpLabelText.Text = isEMode ? "IP ADDRESS" : "IPアドレス";
+
+        Brush labelColor = isEMode ? eTextBrush : isWhiteTheme ? Brushes.Black : Brushes.White;
         ClockDateText.Foreground = labelColor;
         ClockTimeText.Foreground = labelColor;
+        SegmentClock.SegmentBrush = labelColor;
+        SegmentClock.Visibility = isEMode ? Visibility.Visible : Visibility.Collapsed;
+        ClockTimeText.Visibility = isEMode ? Visibility.Collapsed : Visibility.Visible;
         IncomeLabelText.Foreground = labelColor;
         CpuLabelText.Foreground = labelColor;
         MemoryLabelText.Foreground = labelColor;
@@ -230,10 +267,79 @@ public partial class OverlayWindow : Window
         NetworkIpLabelText.Foreground = labelColor;
         NetworkDnsLabelText.Foreground = labelColor;
 
+        foreach (var heading in new[]
+        {
+            ClockDateText, IncomeLabelText, CpuLabelText, MemoryLabelText, GpuLabelText,
+            VramLabelText, DiskLabelText, NetworkSpeedLabelText, NetworkIpLabelText, NetworkDnsLabelText,
+        })
+        {
+            if (isEMode)
+                heading.FontFamily = new System.Windows.Media.FontFamily("Arial");
+            else
+                heading.ClearValue(System.Windows.Controls.TextBlock.FontFamilyProperty);
+        }
+        ClockDateText.TextAlignment = isEMode ? TextAlignment.Left : TextAlignment.Center;
+
         foreach (var (key, dark, light) in ThemedBrushes)
         {
-            BackgroundBorder.Resources[key] = new SolidColorBrush(isWhiteTheme ? light : dark);
+            var color = isEMode ? key switch
+            {
+                "CpuBrush" => Color.FromRgb(0x4C, 0xBF, 0xF5),
+                "MemoryBrush" => Color.FromRgb(0x00, 0xDB, 0xD6),
+                "GpuBrush" or "VramBrush" => Color.FromRgb(0x50, 0xEB, 0x91),
+                "DiskBrush" => Color.FromRgb(0x50, 0xC3, 0xF7),
+                "DiskWarningBrush" => Color.FromRgb(0xC0, 0x00, 0x00),
+                "NetworkDownloadBrush" => Color.FromRgb(0xC0, 0x00, 0x00),
+                "NetworkUploadBrush" => Color.FromRgb(0xFF, 0x76, 0x00),
+                "NetworkAddressBrush" => Color.FromRgb(0xFF, 0x76, 0x00),
+                _ => isWhiteTheme ? light : dark,
+            } : isWhiteTheme ? light : dark;
+            var brush = new SolidColorBrush(color);
+            brush.Freeze();
+            BackgroundBorder.Resources[key] = brush;
+            // 使用率・容量・通信速度はグラフと同じ色で表示する。
+            BackgroundBorder.Resources[key + "Text"] = isEMode
+                && key is ("SecondaryTextBrush" or "LunchBrush") ? eTextBrush : brush;
         }
+
+        Brush ThemeBrush(string key) => (Brush)BackgroundBorder.Resources[key];
+        BackgroundBorder.Resources["CpuNameTextBrush"] = ThemeBrush(isEMode ? "CpuBrush" : "SecondaryTextBrush");
+        BackgroundBorder.Resources["GpuNameTextBrush"] = ThemeBrush(isEMode ? "GpuBrush" : "SecondaryTextBrush");
+        BackgroundBorder.Resources["DiskNameTextBrush"] = ThemeBrush(isEMode ? "DiskBrush" : "SecondaryTextBrush");
+        BackgroundBorder.Resources["DiskWarningNameTextBrush"] = ThemeBrush(isEMode ? "DiskWarningBrush" : "SecondaryTextBrush");
+        BackgroundBorder.Resources["DiskWarningValueTextBrush"] = ThemeBrush(isEMode ? "DiskWarningBrush" : "DiskBrush");
+        BackgroundBorder.Resources["VolumeTrackBrush"] = isEMode
+            ? Brushes.Transparent : new SolidColorBrush(Color.FromArgb(40, 255, 255, 255));
+        if (isEMode)
+        {
+            IncomeLabelText.Foreground = ThemeBrush("WorkHoursBrush");
+            CpuLabelText.Foreground = ThemeBrush("CpuBrush");
+            MemoryLabelText.Foreground = ThemeBrush("MemoryBrush");
+            GpuLabelText.Foreground = ThemeBrush("GpuBrush");
+            VramLabelText.Foreground = ThemeBrush("VramBrush");
+            DiskLabelText.Foreground = ThemeBrush("DiskBrush");
+            NetworkSpeedLabelText.Foreground = ThemeBrush("NetworkUploadBrush");
+        }
+
+        var gridBrush = new SolidColorBrush(Color.FromRgb(0x00, 0xDB, 0xD6));
+        gridBrush.Freeze();
+        foreach (var graph in new[] { CpuGraph, MemoryGraph, GpuGraph, VramGraph })
+        {
+            if (isEMode)
+            {
+                graph.GridBrush = gridBrush;
+                graph.FillOpacity = 1;
+            }
+            else
+            {
+                graph.ClearValue(GraphControl.GridBrushProperty);
+                graph.ClearValue(GraphControl.FillOpacityProperty);
+            }
+        }
+        if (isEMode)
+            NetworkGraph.GridBrush = gridBrush;
+        else
+            NetworkGraph.ClearValue(DualSeriesGraphControl.GridBrushProperty);
 
         ClockSection.Visibility = settings.ShowClock ? Visibility.Visible : Visibility.Collapsed;
         WorkHoursSection.Visibility = settings.ShowWorkHours ? Visibility.Visible : Visibility.Collapsed;

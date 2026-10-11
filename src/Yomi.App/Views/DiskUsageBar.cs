@@ -11,7 +11,25 @@ public sealed class DiskUsageBar : FrameworkElement
 {
     private const double LowSpaceThresholdPercent = 10.0;
 
-    private static readonly Brush TrackBrush = CreateFrozenBrush(Color.FromArgb(40, 255, 255, 255));
+    public static readonly DependencyProperty TrackBrushProperty = DependencyProperty.Register(
+        nameof(TrackBrush), typeof(Brush), typeof(DiskUsageBar),
+        new FrameworkPropertyMetadata(CreateFrozenBrush(Color.FromArgb(40, 255, 255, 255)), FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public Brush TrackBrush
+    {
+        get => (Brush)GetValue(TrackBrushProperty);
+        set => SetValue(TrackBrushProperty, value);
+    }
+
+    public static readonly DependencyProperty IsRoundedProperty = DependencyProperty.Register(
+        nameof(IsRounded), typeof(bool), typeof(DiskUsageBar),
+        new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public bool IsRounded
+    {
+        get => (bool)GetValue(IsRoundedProperty);
+        set => SetValue(IsRoundedProperty, value);
+    }
 
     public static readonly DependencyProperty UsagePercentProperty = DependencyProperty.Register(
         nameof(UsagePercent), typeof(double), typeof(DiskUsageBar),
@@ -56,7 +74,7 @@ public sealed class DiskUsageBar : FrameworkElement
         var height = ActualHeight;
         if (width <= 0 || height <= 0) return;
 
-        var radius = height / 2;
+        var radius = IsRounded ? height / 2 : 0;
         dc.DrawRoundedRectangle(TrackBrush, null, new Rect(0, 0, width, height), radius, radius);
 
         var usage = Math.Clamp(UsagePercent, 0, 100);

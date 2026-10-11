@@ -17,6 +17,17 @@ public sealed class GraphControl : FrameworkElement
         nameof(GridBrush), typeof(Brush), typeof(GraphControl),
         new FrameworkPropertyMetadata(new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)), FrameworkPropertyMetadataOptions.AffectsRender, OnGridBrushChanged));
 
+    public static readonly DependencyProperty FillOpacityProperty = DependencyProperty.Register(
+        nameof(FillOpacity), typeof(double), typeof(GraphControl),
+        new FrameworkPropertyMetadata(50.0 / 255, FrameworkPropertyMetadataOptions.AffectsRender, OnFillOpacityChanged),
+        value => value is double opacity && double.IsFinite(opacity) && opacity >= 0 && opacity <= 1);
+
+    public double FillOpacity
+    {
+        get => (double)GetValue(FillOpacityProperty);
+        set => SetValue(FillOpacityProperty, value);
+    }
+
     public static readonly DependencyProperty MaxValueProperty = DependencyProperty.Register(
         nameof(MaxValue), typeof(double), typeof(GraphControl),
         new FrameworkPropertyMetadata(100.0, FrameworkPropertyMetadataOptions.AffectsRender));
@@ -33,7 +44,7 @@ public sealed class GraphControl : FrameworkElement
         set => SetValue(GridBrushProperty, value);
     }
 
-    /// <summary>LineBrush と同色・単色半透明の塗りつぶしブラシ。LineBrush変更時に自動更新される。</summary>
+    /// <summary>LineBrush と同色の塗りつぶしブラシ。色・透明度の変更時に自動更新される。</summary>
     private Brush _fillBrush = CreateFillBrush(Brushes.DeepSkyBlue);
 
     // ペンは毎フレーム同一なので、ブラシ変更時のみ生成し直してキャッシュする(OnRender での new を避ける)。
@@ -43,13 +54,19 @@ public sealed class GraphControl : FrameworkElement
     private static void OnLineBrushChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var control = (GraphControl)d;
-        control._fillBrush = CreateFillBrush((Brush)e.NewValue);
+        control._fillBrush = CreateFillBrush((Brush)e.NewValue, control.FillOpacity);
         control._linePen = CreateFrozenPen((Brush)e.NewValue, 1.5);
     }
 
     private static void OnGridBrushChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         ((GraphControl)d)._gridPen = CreateFrozenPen((Brush)e.NewValue, 1);
+    }
+
+    private static void OnFillOpacityChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var control = (GraphControl)d;
+        control._fillBrush = CreateFillBrush(control.LineBrush, (double)e.NewValue);
     }
 
     private static Pen CreateFrozenPen(Brush brush, double thickness)
@@ -59,10 +76,10 @@ public sealed class GraphControl : FrameworkElement
         return pen;
     }
 
-    private static Brush CreateFillBrush(Brush lineBrush)
+    private static Brush CreateFillBrush(Brush lineBrush, double opacity = 50.0 / 255)
     {
         var color = (lineBrush as SolidColorBrush)?.Color ?? Colors.DeepSkyBlue;
-        var brush = new SolidColorBrush(Color.FromArgb(50, color.R, color.G, color.B));
+        var brush = new SolidColorBrush(Color.FromArgb((byte)Math.Round(opacity * 255), color.R, color.G, color.B));
         brush.Freeze();
         return brush;
     }

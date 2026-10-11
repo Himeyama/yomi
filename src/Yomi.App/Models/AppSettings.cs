@@ -8,6 +8,7 @@ public enum OverlayBackgroundColor
 
 public sealed class AppSettings
 {
+    public bool EMode { get; set; }
     public double Opacity { get; set; } = 0.2;
     public OverlayBackgroundColor BackgroundColor { get; set; } = OverlayBackgroundColor.Black;
     public bool ShowClock { get; set; } = true;

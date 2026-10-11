@@ -9,6 +9,8 @@
         Topmost="True">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
     <StackPanel Margin="16">
+        <CheckBox x:Name="EModeCheck" Content="Eモード" Margin="0,0,0,10"
+                  Checked="EModeCheck_Changed" Unchecked="EModeCheck_Changed"/>
         <TextBlock Text="透明度" FontWeight="Bold" Margin="0,0,0,4"/>
         <Grid Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
@@ -22,7 +24,7 @@
         </Grid>
 
         <TextBlock Text="背景色" FontWeight="Bold" Margin="0,0,0,4"/>
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+        <StackPanel x:Name="BackgroundColorPanel" Orientation="Horizontal" Margin="0,0,0,10">
             <RadioButton x:Name="BackgroundBlackRadio" Content="黒" GroupName="BackgroundColor" Margin="0,0,16,0"/>
             <RadioButton x:Name="BackgroundWhiteRadio" Content="白" GroupName="BackgroundColor"/>
         </StackPanel>
