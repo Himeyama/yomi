@@ -9,7 +9,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>yomi</AssemblyName>
     <Company>ひかり</Company>
-    <Version>0.15.0</Version>
+    <Version>0.16.0</Version>
     <RootNamespace>Yomi.App</RootNamespace>
     <Platforms>x64</Platforms>
     <ApplicationManifest>app.manifest</ApplicationManifest>

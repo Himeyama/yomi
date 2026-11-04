@@ -10,45 +10,58 @@ permissions:
 
 jobs:
   build-installer:
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Extract version from tag
+      - uses: actions/checkout@v4
+        with:
+          path: app
+      - uses: actions/checkout@v4
+        with:
+          repository: Himeyama/hsis
+          ref: v0.9.4
+          path: hsis
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Validate version
         id: version
         shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          $tag = "${{ github.ref_name }}"
-          $version = $tag -replace '^v', ''
-          echo "version=$version" >> $env:GITHUB_OUTPUT
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "9.0.x"
-
-      - name: Run tests
-        run: dotnet test -c Release
-
-      - name: Publish app
-        run: >
-          dotnet publish src\Yomi.App\Yomi.App.csproj -c Release -r win-x64
-          --self-contained true -p:PublishSingleFile=true
-          -p:Version=${{ steps.version.outputs.version }}
-          -o installer\Yomi.Nsis\publish
-
-      - name: Install NSIS
-        run: choco install nsis -y --no-progress
-
-      - name: Build installer
+          if ($env:RELEASE_TAG -notmatch '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') { throw 'Expected vMAJOR.MINOR.PATCH' }
+          $version = $env:RELEASE_TAG.Substring(1)
+          if (($version.Split('.') | Where-Object { [long]$_ -gt 65535 }).Count) { throw 'Version components must be at most 65535' }
+          "version=$version" >> $env:GITHUB_OUTPUT
+      - name: Test and publish
+        shell: pwsh
+        env:
+          APP_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          dotnet test app/yomi.sln -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Tests failed' }
+          dotnet publish app/src/Yomi.App/Yomi.App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true "-p:Version=$env:APP_VERSION" -o "$env:RUNNER_TEMP/yomi-payload"
+          if ($LASTEXITCODE -ne 0) { throw 'Publish failed' }
+      - name: Build HSIS CLI
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path installer\Yomi.Nsis\Output | Out-Null
-          & "C:\Program Files (x86)\NSIS\makensis.exe" /DMyAppVersion=${{ steps.version.outputs.version }} installer\Yomi.Nsis\setup.nsi
-
+          dotnet publish hsis/src/Hsis.Cli/Hsis.Cli.csproj -c Release -r win-x64 --self-contained true -o "$env:RUNNER_TEMP/hsis"
+          if ($LASTEXITCODE -ne 0) { throw 'HSIS build failed' }
+          Copy-Item hsis/src/Hsis.App/Hsis.ico "$env:RUNNER_TEMP/hsis/Template/src/Hsis.App/Hsis.ico" -Force
+      - name: Build installer
+        shell: pwsh
+        env:
+          APP_VERSION: ${{ steps.version.outputs.version }}
+          HSIS_7ZIP_PATH: C:\Program Files\7-Zip\7z.exe
+        run: |
+          & "$env:RUNNER_TEMP/hsis/hsis.exe" build app/installer/Yomi.Hsis/setup.nsi --output app/artifacts/hsis "-DMyAppVersion=$env:APP_VERSION" "-DSOURCE_DIR=$env:RUNNER_TEMP/yomi-payload"
+          if ($LASTEXITCODE -ne 0) { throw 'Installer build failed' }
+          $installers = @(Get-ChildItem -Path app/artifacts/hsis -Filter "yomi-setup-$env:APP_VERSION.exe" -Recurse -File)
+          if ($installers.Count -ne 1) { throw 'Expected one installer' }
       - name: Upload release
         uses: softprops/action-gh-release@v2
         with:
-          files: installer\Yomi.Nsis\Output\yomi-setup-${{ steps.version.outputs.version }}.exe
+          files: app/artifacts/hsis/**/yomi-setup-${{ steps.version.outputs.version }}.exe
+          fail_on_unmatched_files: true
           generate_release_notes: true

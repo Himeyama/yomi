@@ -61,6 +61,6 @@ dotnet publish src\Yomi.App\Yomi.App.csproj -c Release -r win-x64 --self-contain
 & "C:\Program Files (x86)\NSIS\makensis.exe" installer\Yomi.Nsis\setup.nsi
 ```
 
-HSIS 0.9.4 版は GitHub Actions の「Build HSIS installer」を手動実行して生成できる。既存の NSIS 版とは別のユーザー単位インストールで、同時使用や移行は想定していない。
+リリース用ワークフローは HSIS 0.9.4 でセットアップを生成する。「Build HSIS installer」の手動実行でも生成できる。既存の NSIS 版とは別のユーザー単位インストールで、同時使用や移行は想定していない。
 
 HSIS は任意のコマンド実行に対応していないため、インストール時の自動起動タスク登録とアンインストール時のタスク削除は行わない。自動起動を使う場合はアプリを起動して設定し、アンインストール前に設定で自動起動を無効にする。アプリの設定データはアンインストール後も残る。
