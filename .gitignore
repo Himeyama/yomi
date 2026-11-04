@@ -12,6 +12,9 @@ obj/
 installer/Yomi.Nsis/Output/
 installer/Yomi.Nsis/publish/
 
+# Local build and installer artifacts
+artifacts/
+
 # OS
 Thumbs.db
 Desktop.ini
