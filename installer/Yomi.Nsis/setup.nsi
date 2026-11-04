@@ -12,7 +12,7 @@ Unicode true
 !ifndef MyAppVersion
   !define MyAppVersion "0.14.0"
 !endif
-!define MyAppPublisher "yomi project"
+!define MyAppPublisher "ひかり"
 !define MyAppExeName "yomi.exe"
 !define MyAppTaskName "yomi_AutoStart"
 !define MyAppTaskFolder "yomi"

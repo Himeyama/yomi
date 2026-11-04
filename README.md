@@ -20,7 +20,7 @@ CPU / メモリ / GPU / VRAM の使用率を、数値とタスクマネージャ
 
 ## 技術スタック
 
-- C# / WPF (.NET 8, net8.0-windows)
+- C# / WPF (.NET 9, net9.0-windows)
 - [LibreHardwareMonitorLib](https://www.nuget.org/packages/LibreHardwareMonitorLib) — CPU/メモリ/GPUセンサー取得
 - [TaskScheduler](https://www.nuget.org/packages/TaskScheduler) (Microsoft.Win32.TaskScheduler) — 自動起動タスク登録
 - [NSIS](https://nsis.sourceforge.io/) — インストーラー生成
@@ -31,6 +31,7 @@ CPU / メモリ / GPU / VRAM の使用率を、数値とタスクマネージャ
 src/Yomi.App/        WPFアプリ本体
 tests/Yomi.Tests/     単体テスト (xUnit)
 installer/Yomi.Nsis/   NSISインストーラースクリプト
+installer/Yomi.Hsis/   HSIS 0.9.4 用インストーラー定義
 ```
 
 ## ビルド・実行
@@ -59,3 +60,7 @@ dotnet publish src\Yomi.App\Yomi.App.csproj -c Release -r win-x64 --self-contain
 ```powershell
 & "C:\Program Files (x86)\NSIS\makensis.exe" installer\Yomi.Nsis\setup.nsi
 ```
+
+HSIS 0.9.4 版は GitHub Actions の「Build HSIS installer」を手動実行して生成できる。既存の NSIS 版とは別のユーザー単位インストールで、同時使用や移行は想定していない。
+
+HSIS は任意のコマンド実行に対応していないため、インストール時の自動起動タスク登録とアンインストール時のタスク削除は行わない。自動起動を使う場合はアプリを起動して設定し、アンインストール前に設定で自動起動を無効にする。アプリの設定データはアンインストール後も残る。

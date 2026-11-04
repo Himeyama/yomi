@@ -1,0 +1,61 @@
+name: Build HSIS installer
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Application version (MAJOR.MINOR.PATCH)
+        required: true
+        default: '0.14.0'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: app
+      - uses: actions/checkout@v4
+        with:
+          repository: Himeyama/hsis
+          ref: v0.9.4
+          path: hsis
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Validate version
+        shell: pwsh
+        env:
+          APP_VERSION: ${{ inputs.version }}
+        run: |
+          if ($env:APP_VERSION -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') { throw 'Expected MAJOR.MINOR.PATCH' }
+          if (($env:APP_VERSION.Split('.') | Where-Object { [long]$_ -gt 65535 }).Count) { throw 'Version components must be at most 65535' }
+      - name: Test and publish
+        shell: pwsh
+        env:
+          APP_VERSION: ${{ inputs.version }}
+        run: |
+          dotnet test app/yomi.sln -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Tests failed' }
+          dotnet publish app/src/Yomi.App/Yomi.App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true "-p:Version=$env:APP_VERSION" -o "$env:RUNNER_TEMP/yomi-payload"
+          if ($LASTEXITCODE -ne 0) { throw 'Publish failed' }
+      - name: Build HSIS CLI
+        shell: pwsh
+        run: |
+          dotnet publish hsis/src/Hsis.Cli/Hsis.Cli.csproj -c Release -r win-x64 --self-contained true -o "$env:RUNNER_TEMP/hsis"
+          if ($LASTEXITCODE -ne 0) { throw 'HSIS build failed' }
+          Copy-Item hsis/src/Hsis.App/Hsis.ico "$env:RUNNER_TEMP/hsis/Template/src/Hsis.App/Hsis.ico" -Force
+      - name: Build installer
+        shell: pwsh
+        env:
+          APP_VERSION: ${{ inputs.version }}
+          HSIS_7ZIP_PATH: C:\Program Files\7-Zip\7z.exe
+        run: |
+          & "$env:RUNNER_TEMP/hsis/hsis.exe" build app/installer/Yomi.Hsis/setup.nsi --output app/artifacts/hsis "-DMyAppVersion=$env:APP_VERSION" "-DSOURCE_DIR=$env:RUNNER_TEMP/yomi-payload"
+          if ($LASTEXITCODE -ne 0) { throw 'Installer build failed' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yomi-hsis-${{ inputs.version }}
+          path: app/artifacts/hsis/
+          if-no-files-found: error

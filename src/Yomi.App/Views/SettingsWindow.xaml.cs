@@ -64,15 +64,11 @@ public partial class SettingsWindow : Window
     }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e) => SystemCommands.MinimizeWindow(this);
-
     private void MaximizeButton_Click(object sender, RoutedEventArgs e)
     {
-        if (WindowState == WindowState.Maximized)
-            SystemCommands.RestoreWindow(this);
-        else
-            SystemCommands.MaximizeWindow(this);
+        if (WindowState == WindowState.Maximized) SystemCommands.RestoreWindow(this);
+        else SystemCommands.MaximizeWindow(this);
     }
-
     private void CloseButton_Click(object sender, RoutedEventArgs e) => SystemCommands.CloseWindow(this);
 
     private static string FormatOpacity(double value) => $"{Math.Round(value * 100)}%";
@@ -112,13 +108,20 @@ public partial class SettingsWindow : Window
         else WorkDurationText.Text = "勤務・休憩の時刻を入力すると、実働時間を確認できます。";
     }
 
+    private static void ClearInvalid(System.Windows.Controls.Control control)
+    {
+        control.ClearValue(BorderBrushProperty);
+        control.ClearValue(BorderThicknessProperty);
+    }
+
     private bool ValidateInputs(bool focusError)
     {
         System.Windows.Controls.Control? firstInvalid = null;
         string? message = null;
         void MarkInvalid(System.Windows.Controls.Control control, string error)
         {
-            control.Tag = "Invalid";
+            control.BorderBrush = System.Windows.Media.Brushes.Firebrick;
+            control.BorderThickness = new Thickness(2);
             firstInvalid ??= control;
             message ??= error;
         }
@@ -129,21 +132,21 @@ public partial class SettingsWindow : Window
         var validTimes = true;
         for (var i = 0; i < fields.Length; i++)
         {
-            fields[i].Tag = null;
+            ClearInvalid(fields[i]);
             if (SettingsInput.TryParseTime(fields[i].Text, out times[i])) continue;
             validTimes = false;
             MarkInvalid(fields[i], $"{names[i]}を 9:00 または 0900 の形式で入力してください（0:00〜23:59）。");
         }
         if (validTimes && !SettingsInput.TryGetWorkDuration(times[0], times[1], times[2], times[3], out _))
         {
-            foreach (var field in fields) field.Tag = "Invalid";
+            foreach (var field in fields) { field.BorderBrush = System.Windows.Media.Brushes.Firebrick; field.BorderThickness = new Thickness(2); }
             MarkInvalid(WorkStartTimeBox, "休憩は勤務時間内に設定し、休憩を除く勤務時間を確保してください。");
         }
-        MonthlyBaseSalaryBox.Tag = null;
+        ClearInvalid(MonthlyBaseSalaryBox);
         if (!SettingsInput.TryParseSalary(MonthlyBaseSalaryBox.Text, out _))
             MarkInvalid(MonthlyBaseSalaryBox, "基本給（月）には0以上の金額を入力してください（例：300,000）。");
 
-        CustomImagePathBox.Tag = null;
+        ClearInvalid(CustomImagePathBox);
         if (ShowCustomImageCheck.IsChecked == true && CustomImageLoader.Load(CustomImagePathBox.Text) is null)
             MarkInvalid(CustomImagePathBox, "表示する画像を選択してください。読み込めない場合は、画像を選び直してください。");
 

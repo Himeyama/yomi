@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="346" height="114" viewBox="0 0 346 114" role="img" aria-labelledby="title desc">
+  <title id="title">黄色の7セグメント表示 88:88:88</title>
+  <desc id="desc">灰色の背景と黒いパネルに、黄色の数字を表示したベクトル画像。</desc>
+  <defs>
+    <g id="eight" fill="#ffd400">
+      <path d="M11 0H35L42 5L36 7H11L5 5Z"/>
+      <path d="M1 8L7 5L11 9V27L5 31L0 27V11Z"/>
+      <path d="M38 9L44 5L47 9V27L41 32L37 28V11Z"/>
+      <path d="M11 30H36L41 33L36 36H11L6 33Z"/>
+      <path d="M5 35L11 39V56L6 61L0 57V39Z"/>
+      <path d="M41 35L47 39V57L41 61L37 56V39Z"/>
+      <path d="M11 58H36L42 62L35 64H11L5 60Z"/>
+    </g>
+  </defs>
+  <path fill="#d0d0d0" d="M0 0H346V114H0Z"/>
+  <path fill="#000" d="M14 25H328V95H14Z"/>
+  <use href="#eight" x="20" y="28"/>
+  <use href="#eight" x="72" y="28"/>
+  <use href="#eight" x="135" y="28"/>
+  <use href="#eight" x="188" y="28"/>
+  <path fill="#ffd400" d="M124 44H130V49H124ZM124 73H130V78H124ZM242 56H247V61H242ZM242 77H247V82H242Z"/>
+  <use href="#eight" transform="translate(253 46) scale(.66 .72)"/>
+  <use href="#eight" transform="translate(291 46) scale(.66 .72)"/>
+</svg>
